@@ -1,0 +1,113 @@
+# beacons
+beacon_command_register("bofnet_init", "Initialize beacon ready to run BOFNET", "Synopsis: bofnet_init \nInitialize beacon ready to run BOFNET");
+beacon_command_register("bofnet_shutdown", "Shutdown the BOFNET AppDomain", "Synopsis: bofnet_shutdown \nShutdown the BOFNET AppDomain");
+beacon_command_register("bofnet_list", "List all executable BOFNET's available", "Synopsis: bofnet_list \nList all executable BOFNET's available");
+beacon_command_register("bofnet_listassemblies", "List all loadded assembiles inside BOFNET", "Synopsis: bofnet_listassemblies \nList all loadded assembiles inside BOFNET");
+beacon_command_register("bofnet_execute", "Execute a BOFNET class", "Synopsis: bofnet_execute class arg1 arg2 ...\nExecute's a BOFNET class along with all arguments supplied.  Arguments with spaces should be quoted.\n");
+beacon_command_register("bofnet_load", "Load a .NET assembly containing additional BOFNET classes", "Synopsis: bofnet_load assembly_path\nLoad a .NET assembly containing additional BOFNET classes\n");
+
+sub readAllFileData {
+    $fileHandle = openf($1);
+    $fileData = readb($fileHandle, -1);
+    closef($fileHandle);  
+    return $fileData;  
+}
+
+sub addQuotes {
+    $result = "";
+    foreach $entry ($1){
+        $result = $result." \"$entry\"";
+    }
+    return $result;
+}
+
+sub loadBOFNativeRuntime {
+
+    $nativeBOFPath = script_resource('bofnet_execute.cpp.'.barch($1).'.obj') ;
+
+    if(-exists $nativeBOFPath){
+        return readAllFileData($nativeBOFPath);        
+    }else{
+        blog($1, "[!] The BOFNET native runtime file $nativeBOFPath doesn't exist");
+        return $null;
+    }
+}
+
+sub bofnetExecuteRaw{
+    $bofnetNative = loadBOFNativeRuntime($1);
+    if($bofnetNative != $null){
+        return;
+    }
+   
+    beacon_inline_execute($1, $bofnetNative, "go", "$2\x00".$3);       
+}
+
+alias bofnet_init {
+    $bofnetNative = loadBOFNativeRuntime($1);
+    if($bofnetNative != $null){
+        return;
+    }
+
+    $bofnetRuntime = readAllFileData(script_resource('BOFNET.dll'));
+
+	btask($1, "Initializing BOFNET");
+	beacon_inline_execute($1, $bofnetNative, "go", "BOFNET.Bofs.Initializer\x00".$bofnetRuntime);
+}
+
+alias bofnet_shutdown {
+    $bofnetNative = loadBOFNativeRuntime($1);
+    if($bofnetNative != $null){
+        return;
+    }
+
+	btask($1, "Shuting down BOFNET");
+	beacon_inline_execute($1, $bofnetNative, "go", "BOFNET.Bofs.Shutdown\x00");
+}
+
+alias bofnet_list {
+    $bofnetNative = loadBOFNativeRuntime($1);
+    if($bofnetNative != $null){
+        return;
+    }
+
+	btask($1, "Listing BOFNET classes");
+	beacon_inline_execute($1, $bofnetNative, "go", "BOFNET.Bofs.List\x00");
+}
+
+alias bofnet_listassemblies {
+    $bofnetNative = loadBOFNativeRuntime($1);
+    if($bofnetNative != $null){
+        return;
+    }
+
+	btask($1, "Listing loaded BOFNET assemblies");
+	beacon_inline_execute($1, $bofnetNative, "go", "BOFNET.Bofs.ListAssemblies\x00");
+}
+
+alias bofnet_execute {
+    
+    $bofnetNative = loadBOFNativeRuntime($1);
+    if($bofnetNative != $null){
+        return;
+    }
+    $bofArguments = "\x00";
+  
+    @argParts = sublist(@_,2);
+    if(size(@argParts) > 0){
+        $bofArguments = " ".addQuotes(@argParts)."\x00";    
+    }
+   
+	btask($1, "Attempting to execute BOFNET $2");
+	beacon_inline_execute($1, $bofnetNative, "go", $2.$bofArguments);
+}
+
+alias bofnet_load {
+    $bofnetNative = loadBOFNativeRuntime($1);
+    if($bofnetNative != $null){
+        return;
+    }
+
+    $assemblyData = readAllFileData($2);
+	btask($1, "Attempting to load .NET assembly $2 into BOFNET");
+	beacon_inline_execute($1, $bofnetNative, "go", "BOFNET.Bofs.AssemblyLoader\x00".$assemblyData);
+}
