@@ -62,7 +62,7 @@ bofnet_execute HelloWorld @_EthicalChaos_
 
 ## Caveats
 
-BOF.NET has only been testing with .NET 2.  There is likely more work needed for .NET v4+.  There is a high probability of memory leaks and potential vulnerabilities within the native runtime as it has had little testing and needs further polishing.  Use at your own risk!
+BOF.NET has only been tested with .NET 2.  There is more work needed for .NET v4+.  There is a high probability of memory leaks and potential vulnerabilities within the native runtime as it has had little testing and needs further polishing.  Use at your own risk!
 
 ## How BOF.NET Works?
 
