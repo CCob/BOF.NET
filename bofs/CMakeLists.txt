@@ -21,5 +21,8 @@ install(TARGETS bofs_x86
 install(TARGETS bofs_x64
     OBJECTS DESTINATION ${CMAKE_BINARY_DIR})
 
-install(FILES ${CMAKE_BINARY_DIR}/objects-MinSizeRel/bofs_x86/bofnet_execute.cpp.obj DESTINATION ${CMAKE_INSTALL_PREFIX} RENAME bofnet_execute.cpp.x86.obj)
-install(FILES ${CMAKE_BINARY_DIR}/objects-MinSizeRel/bofs_x64/bofnet_execute.cpp.obj DESTINATION ${CMAKE_INSTALL_PREFIX} RENAME bofnet_execute.cpp.x64.obj)
+install(FILES ${CMAKE_BINARY_DIR}/objects-MinSizeRel/bofs_x86/bofnet_execute.cpp.obj DESTINATION ${CMAKE_INSTALL_PREFIX}/net35 RENAME bofnet_execute.cpp.x86.obj)
+install(FILES ${CMAKE_BINARY_DIR}/objects-MinSizeRel/bofs_x64/bofnet_execute.cpp.obj DESTINATION ${CMAKE_INSTALL_PREFIX}/net35 RENAME bofnet_execute.cpp.x64.obj)
+
+install(FILES ${CMAKE_BINARY_DIR}/objects-MinSizeRel/bofs_x86/bofnet_execute.cpp.obj DESTINATION ${CMAKE_INSTALL_PREFIX}/net40 RENAME bofnet_execute.cpp.x86.obj)
+install(FILES ${CMAKE_BINARY_DIR}/objects-MinSizeRel/bofs_x64/bofnet_execute.cpp.obj DESTINATION ${CMAKE_INSTALL_PREFIX}/net40 RENAME bofnet_execute.cpp.x64.obj)

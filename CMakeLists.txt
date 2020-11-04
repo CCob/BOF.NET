@@ -7,9 +7,11 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_INSTALL_PREFIX ${CMAKE_BINARY_DIR}/dist)
 set(CMAKE_INSTALL_OBJECTSDIR "")
 
-file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/dist)
+file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/dist/net35)
+file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/dist/net40)
 
-install(FILES bofnet.cna DESTINATION ${CMAKE_INSTALL_PREFIX})
+install(FILES bofnet.cna DESTINATION ${CMAKE_INSTALL_PREFIX}/net35)
+install(FILES bofnet.cna DESTINATION ${CMAKE_INSTALL_PREFIX}/net40)
 
-add_subdirectory(managed)
 add_subdirectory(bofs)
+add_subdirectory(managed)
