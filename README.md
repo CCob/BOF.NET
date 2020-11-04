@@ -51,28 +51,46 @@ bofnet_execute HelloWorld @_EthicalChaos_
 
 ## Beacon Command Reference
 
-| Command                   | Description                                                              |
-|---------------------------|--------------------------------------------------------------------------|
-| bofnet_init               | Initialises the BOF.NET runtime inside the beacon process                |
-| bofnet_list               | List's all executable BOF.NET classes                                    |
-| bofnet_listassembiles     | List assemblies currently loaded into the BOF.NET runtime                |
-| bofnet_execute [args]     | Execute a BOF.NET class, supplying optional arguments                    |
-| bofnet_load assembly_path | Load an additional .NET assembly from memory into the BOF.NET runtime.   |
-| bofnet_shutdown           | Shutdown the BOF.NET runtime                                             |
+| Command                                | Description                                                              |
+|----------------------------------------|--------------------------------------------------------------------------|
+| bofnet_init                            | Initialises the BOF.NET runtime inside the beacon process                |
+| bofnet_list                            | List's all executable BOF.NET classes                                    |
+| bofnet_listassembiles                  | List assemblies currently loaded into the BOF.NET runtime                |
+| bofnet_execute *bof_name* [*args*]     | Execute a BOF.NET class, supplying optional arguments                    |
+| bofnet_load *assembly_path*            | Load an additional .NET assembly from memory into the BOF.NET runtime.   |
+| bofnet_shutdown                        | Shutdown the BOF.NET runtime                                             |
 
 ## Caveats
 
 BOF.NET has only been tested with .NET 2.  There is more work needed for .NET v4+.  There is a high probability of memory leaks and potential vulnerabilities within the native runtime as it has had little testing and needs further polishing.  Use at your own risk!
 
+BOF.NET will follow the same restrictions as it's native BOF counterpart.  Execution of a BOF.NET class internally uses the `inline_execute` functionality.  Therefore, any BOF.NET invocations will block beacon until it finishes.  
+
+BOF.NET does have the added benefit that loaded assemblies remain persistent.  This facilitates the use of threads within your BOF.NET class without the worry of the assembly being unloaded after the `Go` function finishes. But you **cannot** write to the beacon console or use any other beacon BOF API's since these are long gone and released by Cobalt Strike after the BOF returns.
+
 ## How BOF.NET Works?
 
-TODO
+BOF.NET contains a small native BOF that acts as a bridge into the managed world.  When `bofnet_init` is called, this will start the managed CLR runtime within the process that beacon is running from.  Once the CLR is started, a separate .NET AppDomain is created to host all assemblies loaded by BOF.NET.  Following on from this, the BOF.NET runtime assembly is loaded into the AppDomain from memory to facilitate the remaining features of BOF.NET.  No .NET assemblies are loaded from disk.
+
+All future BOF.NET calls from here on out are typically handled by the `InvokeBof` method from the `BOFNET.Runtime` class.  This keeps the native BOF code small and concise and pushes all runtime logic into the managed BOF.NET runtime.
 
 ## Building
 
-TODO
+BOF.NET uses the CMake build system along with MinGW GCC compiler for generating BOF files and uses msbuild for building the managed runtime.  So prior to building, all these prerequisites need to be satisfied and available on the PATH.
+
+From the checkout directory, issue the following commands 
+
+```shell
+mkdir build
+cd build
+cmake -DCMAKE_BUILD_TYPE=MinSizeRel -G "MinGW Makefiles" ..
+cmake --build .
+cmake --install .
+```
+
+Once the steps are complete, the `build\dist` folder should contain the artifacts of the build and should be ready to use within Cobalt Strike
 
 ## References
 
-TODO
-
+* https://modexp.wordpress.com/2019/05/10/dotnet-loader-shellcode/ - CLR creation using native raw COM interfaces
+* https://gist.github.com/sysenter-eip/1a985a224c67aa78f62be83f190b6e86 - Great trick for declaring BOF imports

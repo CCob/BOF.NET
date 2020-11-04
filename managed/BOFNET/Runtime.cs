@@ -47,10 +47,11 @@ namespace BOFNET {
             }
         }
 
-        public static void LoadAssembly(byte[] assemblyData) {
+        public static Assembly LoadAssembly(byte[] assemblyData) {
             Assembly assembly = AppDomain.CurrentDomain.Load(assemblyData);
             AssemblyName assemblyName = new AssemblyName(assembly.FullName);
-            LoadedAssemblies[assemblyName.Name] = assembly;
+            LoadedAssemblies[assemblyName.Name] = assembly;      
+            return assembly;
         }
   
         public static void InvokeBof(long consoleCallback, string bofName, object args) {
@@ -74,20 +75,15 @@ namespace BOFNET {
                 }
 
                 try {
+
                     bofType = FindType(bofName);
-                } catch (AmbiguousMatchException) {
-                    bcw.WriteLine($"[!] Multiple BOFs found with name {bofName}, use fully qualifed type including namespace");
-                    return;
-                }
-                
-                if (bofType == null) {
-                    bcw.WriteLine($"[!] Failed to find type {bofName} within BOFNET AppDomain, have you loaded the containing assembly yet?");
-                    return;
-                }
 
-                BeaconObject bo = (BeaconObject)Activator.CreateInstance(bofType, new object[] { new DefaultBeaconApi(bcw) });
+                    if (bofType == null) {
+                        bcw.WriteLine($"[!] Failed to find type {bofName} within BOFNET AppDomain, have you loaded the containing assembly yet?");
+                        return;
+                    }
 
-                try {
+                    BeaconObject bo = (BeaconObject)Activator.CreateInstance(bofType, new object[] { new DefaultBeaconApi(bcw) });
 
                     if (args is string cmdLine) {
                         if (!string.IsNullOrEmpty(cmdLine))
@@ -99,9 +95,22 @@ namespace BOFNET {
                     } else {
                         bcw.WriteLine($"[!] Unuspported argument type {args.GetType().FullName} when attempting to invoke BOF");
                     }
-                }catch(Exception e) {
+
+                } catch (AmbiguousMatchException) {
+                    bcw.WriteLine($"[!] Multiple BOFs found with name {bofName}, use fully qualifed type including namespace");
+                    return;
+
+                } catch (ReflectionTypeLoadException rtle) {
+                    bcw.WriteLine($"[!] Failed to load a type during BOFNET execution with the folowing loader exceptions:");
+                    foreach(Exception e in rtle.LoaderExceptions) {
+                        bcw.WriteLine($"{e}");
+                    }
+                    return;
+                }
+                catch (Exception e) {
                     bcw.WriteLine($"[!] BOFNET executed but threw an unhandled exception: {e}");
                 }
+                
             }                                                           
         }
 

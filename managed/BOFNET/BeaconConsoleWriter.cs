@@ -1,4 +1,4 @@
-﻿using System;
+﻿
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -12,6 +12,8 @@ namespace BOFNET {
 
         private class BeaconStream : MemoryStream {
 
+            public uint FlushTrigger { get; set; } = 4096;
+
             Thread ownerThread;
             BeaconConsoleWriterDelegate beaconConsoleWriter;
 
@@ -22,6 +24,9 @@ namespace BOFNET {
 
             public override void Write(byte[] buffer, int offset, int count) {
                 base.Write(buffer, offset, count);
+                if(Position > FlushTrigger) {
+                    Flush();
+                }
             }
 
             public override void Flush() {

@@ -9,7 +9,7 @@ namespace BOFNET.Bofs {
         public Initializer(BeaconApi api) : base(api) { }   
 
         public override void Go(byte[] assemblyData) {
-            BeaconConsole.WriteLine($"[+] BOFNET Runtime Initalized, assembly size {assemblyData.Length}");
+            BeaconConsole.WriteLine($"[+] BOFNET Runtime Initalized, assembly size {assemblyData.Length}, .NET Runtime Version: {Environment.Version.ToString()}");
         }
     }
 }

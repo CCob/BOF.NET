@@ -17,6 +17,7 @@ CTestTestfile.cmake
 _deps
 *.cbp
 bofnet_managed-prefix
+build
 
 
 # User-specific files
