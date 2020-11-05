@@ -71,6 +71,8 @@ BOF.NET will follow the same restrictions as it's native BOF counterpart.  Execu
 
 BOF.NET does have the added benefit that loaded assemblies remain persistent.  This facilitates the use of threads within your BOF.NET class without the worry of the assembly being unloaded after the `Go` function finishes. But you **cannot** write to the beacon console or use any other beacon BOF API's since these are long gone and released by Cobalt Strike after the BOF returns.
 
+If you want to execute your BOF.NET class as a background job using a thread, use the `bofnet_job` command.  This wraps the invocation in a separate thread and handles `BeaconConsole` writes transparently for you.  Be careful with long running jobs and lots of console output, since the console buffer will cached until a call to `bofnet_jobstatus` is invoked.  
+
 ## How BOF.NET Works?
 
 BOF.NET contains a small native BOF that acts as a bridge into the managed world.  When `bofnet_init` is called, this will start the managed CLR runtime within the process that beacon is running from.  Once the CLR is started, a separate .NET AppDomain is created to host all assemblies loaded by BOF.NET.  Following on from this, the BOF.NET runtime assembly is loaded into the AppDomain from memory to facilitate the remaining features of BOF.NET.  No .NET assemblies are loaded from disk.
