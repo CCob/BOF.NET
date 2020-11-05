@@ -8,7 +8,7 @@ namespace BOFNET {
     public class DefaultBeaconApi : BeaconApi {
         public TextWriter Console { get; }
 
-        public DefaultBeaconApi(BeaconConsoleWriter consoleWriter) {
+        public DefaultBeaconApi(BeaconOutputWriter consoleWriter) {
             this.Console = consoleWriter;
         }
     }

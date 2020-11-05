@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading;
 
 namespace BOFNET {
-    public class BeaconConsoleWriter : StreamWriter {
+    public class BeaconConsoleWriter : BeaconOutputWriter {
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate void BeaconConsoleWriterDelegate([MarshalAs(UnmanagedType.LPArray)] byte[] data, int len);
@@ -47,13 +47,8 @@ namespace BOFNET {
         }
 
         public BeaconConsoleWriter(BeaconConsoleWriterDelegate beaconConsoleWriter) : base(new BeaconStream(beaconConsoleWriter, Thread.CurrentThread)){
-            AutoFlush = false;
         }
  
-        public override Encoding Encoding {
-            get { return Encoding.UTF8; }
-        }
-
         protected override void Dispose(bool disposing) {
             Flush();
             base.Dispose(disposing);

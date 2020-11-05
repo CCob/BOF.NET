@@ -5,8 +5,8 @@
   </PropertyGroup>
   
 <!-- .NET Standard 2.0 references, compilation flags and build options -->
-<PropertyGroup Condition=" '$(TargetFramework)' == 'net35'">
-</PropertyGroup>
+    <PropertyGroup Condition=" '$(TargetFramework)' == 'net35'">      
+    </PropertyGroup>
 
 <!-- .NET 4.5 references, compilation flags and build options -->
   <ItemGroup Condition=" '$(TargetFramework)' == 'net45' ">
@@ -20,7 +20,6 @@
     <Reference Include="System.Security" />
     <Reference Include="System.Xml" />
     <Reference Include="System.Configuration" />
-    
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Properties\" />
@@ -33,6 +32,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net40|AnyCPU'">
     <DebugType>none</DebugType>
     <DebugSymbols>false</DebugSymbols>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
 </Project>
