@@ -11,7 +11,7 @@ namespace BOFNET.Bofs {
         public override void Go(string[] args) {
 
             if(args.Length == 0) {
-                BeaconConsole.WriteLine("[!] Cannot run a job, no BOF.NET name specified to run");
+                BeaconConsole.WriteLine("[!] Cannot run a job, no BOF.NET class specified to run");
                 return;
             }
 

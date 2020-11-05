@@ -59,6 +59,9 @@ bofnet_execute HelloWorld @_EthicalChaos_
 | bofnet_execute *bof_name* [*args*]     | Execute a BOF.NET class, supplying optional arguments                    |
 | bofnet_load *assembly_path*            | Load an additional .NET assembly from memory into the BOF.NET runtime.   |
 | bofnet_shutdown                        | Shutdown the BOF.NET runtime                                             |
+| bofnet_job *bof_name* [*args*]         | Execute a BOF.NET class as a background job (thread)                     |
+| bofnet_jobs                            | List all currently active BOF.NET jobs                                   |
+| bofnet_jobstatus *job_id*               | Dump any pending console buffer from the background job                  |
 
 ## Caveats
 
