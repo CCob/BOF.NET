@@ -36,12 +36,13 @@ sub loadBOFNativeRuntime {
     }
 }
 
-sub bofnetExecuteRaw{
+sub bofnet_execute_raw{
+    
     $bofnetNative = loadBOFNativeRuntime($1);
     if($bofnetNative != $null){
         return;
     }
-   
+
     beacon_inline_execute($1, $bofnetNative, "go", "$2\x00".$3);       
 }
 
