@@ -36,7 +36,7 @@ namespace BOFNET {
                         break;
 
                     case 's':
-                        Values.Add(br.ReadInt16());
+                        Values.Add(br.ReadInt16BE());
                         break;
 
                     case 'b':
