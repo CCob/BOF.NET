@@ -1,4 +1,5 @@
 ﻿
+using System;
 using System.Threading;
 
 namespace BOFNET {
@@ -19,8 +20,12 @@ namespace BOFNET {
         }
 
         private void DoTask(object args) {
-            if (args is string[] stringArgs) {
-                BeaconObject.Go(stringArgs);
+            try {
+                if (args is string[] stringArgs) {
+                    BeaconObject.Go(stringArgs);
+                }
+            }catch(Exception e) {
+                BeaconConsole.WriteLine($"Job execution failed with exception:\n{e}");
             }
         }
 
