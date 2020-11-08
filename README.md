@@ -61,7 +61,9 @@ bofnet_execute HelloWorld @_EthicalChaos_
 | bofnet_shutdown                        | Shutdown the BOF.NET runtime                                             |
 | bofnet_job *bof_name* [*args*]         | Execute a BOF.NET class as a background job (thread)                     |
 | bofnet_jobs                            | List all currently active BOF.NET jobs                                   |
-| bofnet_jobstatus *job_id*               | Dump any pending console buffer from the background job                  |
+| bofnet_jobstatus *job_id*              | Dump any pending console buffer from the background job                  |
+| bofnet_jobkill *job_id*                | Dump any pending console buffer from the background job then kill it.  Warning, can cause deadlocks when terminating a thread that have transitioned into native code                  |
+
 
 ## Caveats
 

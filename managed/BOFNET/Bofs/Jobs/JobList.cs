@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace BOFNET.Bofs {
+namespace BOFNET.Bofs.Jobs {
     public class JobList
         : BeaconObject {
         public JobList(BeaconApi api) : base(api) {

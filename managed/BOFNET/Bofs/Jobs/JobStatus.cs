@@ -1,6 +1,6 @@
 ﻿
 
-namespace BOFNET.Bofs {
+namespace BOFNET.Bofs.Jobs {
     public class JobStatus : BeaconObject {
         public JobStatus(BeaconApi api) : base(api) {
         }

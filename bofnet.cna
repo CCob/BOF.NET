@@ -8,6 +8,8 @@ beacon_command_register("bofnet_load", "Load a .NET assembly containing addition
 beacon_command_register("bofnet_job", "Execute a BOFNET class as a background job in a seperate threead", "Synopsis: bofnet_job class arg1 arg2\nExecute a BOFNET class as a background job\n");
 beacon_command_register("bofnet_jobs", "List active BOFNET background jobs", "Synopsis: bofnet_jobs\nList active BOFNET background jobs\n");
 beacon_command_register("bofnet_jobstatus", "Dump the console buffer of an active BOFNET background job", "Synopsis: bofnet_jobstatus jobid\nDump the console buffer of an active BOFNET background job\n");
+beacon_command_register("bofnet_jobkill", "Kills a running jobs thread (warning, could leave leaked resources/sockets behind", "Synopsis: bofnet_jobkill jobid\nKills a running jobs thread (warning, could leave leaked resources/sockets behind\n");
+
 
 sub readAllFileData {
     $fileHandle = openf($1);
@@ -130,14 +132,18 @@ alias bofnet_job {
     }
    
 	btask($1, "Attempting to start BOFNET $2 as a job");
-	beacon_inline_execute($1, $bofnetNative, "go", "BOFNET.Bofs.JobRunner ".$2.$bofArguments);  
+	beacon_inline_execute($1, $bofnetNative, "go", "BOFNET.Bofs.Jobs.JobRunner ".$2.$bofArguments);  
 
 }
 
 alias bofnet_jobs {
-    fireAlias($1, "bofnet_execute", "BOFNET.Bofs.JobList");
+    fireAlias($1, "bofnet_execute", "BOFNET.Bofs.Jobs.JobList");
 }
 
 alias bofnet_jobstatus {
-    fireAlias($1, "bofnet_execute", "BOFNET.Bofs.JobStatus ".$2);
+    fireAlias($1, "bofnet_execute", "BOFNET.Bofs.Jobs.JobStatus ".$2);
+}
+
+alias bofnet_jobkill {
+    fireAlias($1, "bofnet_execute", "BOFNET.Bofs.Jobs.JobKill ".$2);
 }
