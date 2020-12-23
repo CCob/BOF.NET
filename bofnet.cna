@@ -5,6 +5,7 @@ beacon_command_register("bofnet_list", "List all executable BOFNET's available",
 beacon_command_register("bofnet_listassemblies", "List all loadded assembiles inside BOFNET", "Synopsis: bofnet_listassemblies \nList all loadded assembiles inside BOFNET");
 beacon_command_register("bofnet_execute", "Execute a BOFNET class", "Synopsis: bofnet_execute class arg1 arg2 ...\nExecute's a BOFNET class along with all arguments supplied.  Arguments with spaces should be quoted.\n");
 beacon_command_register("bofnet_load", "Load a .NET assembly containing additional BOFNET classes", "Synopsis: bofnet_load assembly_path\nLoad a .NET assembly containing additional BOFNET classes\n");
+beacon_command_register("bofnet_loadbig", "Loads assemblies larger than the 1M limit by chunking the data", "Synopsis: bofnet_loadbig assembly_path\nLoads assemblies larger than the 1M limit by chunking the data\n");
 beacon_command_register("bofnet_job", "Execute a BOFNET class as a background job in a seperate threead", "Synopsis: bofnet_job class arg1 arg2\nExecute a BOFNET class as a background job\n");
 beacon_command_register("bofnet_jobs", "List active BOFNET background jobs", "Synopsis: bofnet_jobs\nList active BOFNET background jobs\n");
 beacon_command_register("bofnet_jobstatus", "Dump the console buffer of an active BOFNET background job", "Synopsis: bofnet_jobstatus jobid\nDump the console buffer of an active BOFNET background job\n");
@@ -46,6 +47,20 @@ sub bofnet_execute_raw{
     }
 
     beacon_inline_execute($1, $bofnetNative, "go", "$2\x00".$3);       
+}
+
+# Not secure random string by any means!
+sub generateRandomString {
+
+    $validChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890";
+    $validCharsCount = strlen($validChars);
+    $randomString = "";
+
+    for( $idx = 0; $idx < $1; $idx++){
+        $randomString  =  $randomString . charAt($validChars, rand($validCharsCount)); 
+    }
+
+    return $randomString;
 }
 
 alias bofnet_init {
@@ -116,6 +131,40 @@ alias bofnet_load {
     $assemblyData = readAllFileData($2);
 	btask($1, "Attempting to load .NET assembly $2 into BOFNET");
 	beacon_inline_execute($1, $bofnetNative, "go", "BOFNET.Bofs.AssemblyLoader\x00".$assemblyData);
+}
+
+
+alias bofnet_loadbig{
+
+    local('$assemblyData');
+
+    # 900k chunks sent to leave room for protocol data too
+    $chunkSize = 1024 * 900 ;
+
+    if(-exists $2){
+        $assemblyData = readAllFileData($nativeBOFPath);        
+    }else{
+        blog($1, "[!] The file $2 doesn't seem to exist, missing quotes by any chance?");
+        return;
+    }    
+
+    btask($1, "Attempting to load large .NET assembly $2 into BOFNET");
+    $rawData = readAllFileData($2);
+    $numChunks = strlen($rawData) / $chunkSize;
+    $remainder = strlen($rawData) % $chunkSize;
+    $id = generateRandomString(8);
+
+    for($i = 0; $i < $numChunks; $i++){ 
+        $chunk = substr($rawData, $i * $chunkSize, ($i * $chunkSize) + $chunkSize);
+        $assemblyData = bof_pack($1, "Zib", $id , $chunkSize, $chunk) ;
+        bofnet_execute_raw($1, "BOFNET.Bofs.AssemblyLoaderBig", $assemblyData);
+    }
+
+    if($remainder > 0){
+        $chunk = substr($rawData, $numChunks * $chunkSize, ($numChunks * $chunkSize) + $remainder + 1);
+        $assemblyData = bof_pack($1, "Zib", $id , $chunkSize, $chunk) ;
+        bofnet_execute_raw($1, "BOFNET.Bofs.AssemblyLoaderBig", $assemblyData);        
+    }
 }
 
 alias bofnet_job {
