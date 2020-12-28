@@ -29,7 +29,7 @@ Before any BOF.NET class can be used, the BOF.NET runtime needs to be initialise
 bofnet_init
 ```
 
-Once the runtime has loaded, you can proceed to load further .NET assemblies including other BOF.NET classes.
+Once the runtime has loaded, you can proceed to load further .NET assemblies including other BOF.NET classes.  BOF.NET now chunks the loading of Assemblies, therefore large assemblies can also be loaded (1M+)
 
 ```shell
 bofnet_load /path/to/bofnet/HelloWorld.dll
@@ -64,10 +64,9 @@ bofnet_execute HelloWorld @_EthicalChaos_
 | bofnet_jobstatus *job_id*              | Dump any pending console buffer from the background job                  |
 | bofnet_jobkill *job_id*                | Dump any pending console buffer from the background job then kill it.  Warning, can cause deadlocks when terminating a thread that have transitioned into native code                  |
 
-
 ## Caveats
 
-BOF.NET has only been tested with .NET 2.  There is more work needed for .NET v4+.  There is a high probability of memory leaks and potential vulnerabilities within the native runtime as it has had little testing and needs further polishing.  Use at your own risk!
+Depending on the target operating system will depend on which distribution should be used (net35/net40).  The runtime will attempt to create a .NET v4 CLR using the `CLRCreateInstance` function that was made available as part of .NET v4.  If the function cannot be found, the older mechanism is used to initialise .NET v2.  Currently the native component cannot determine which managed runtime to load dynamically, so make sure you use the correct distribution folder.  A fully up to date Windows 7 will generally have .NET 4 installed, so on most occasions you will need the net40 folder from inside the dist folder.  Older operating systems like XP will depend on what is installed.
 
 BOF.NET will follow the same restrictions as it's native BOF counterpart.  Execution of a BOF.NET class internally uses the `inline_execute` functionality.  Therefore, any BOF.NET invocations will block beacon until it finishes.  
 
