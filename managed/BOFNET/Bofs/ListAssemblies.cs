@@ -9,8 +9,8 @@ namespace BOFNET.Bofs {
         public ListAssemblies(BeaconApi api) : base(api) {}
 
         public override void Go(string[] _) {
-            foreach(KeyValuePair<string, Assembly> assembly in Runtime.LoadedAssemblies) {
-                BeaconConsole.WriteLine($"{assembly.Key}: {assembly.Value.FullName}");
+            foreach(KeyValuePair<string, Runtime.AssemblyInfo> assembly in Runtime.LoadedAssemblies) {
+                BeaconConsole.WriteLine($"{assembly.Key}: {assembly.Value.Assembly.FullName}");
             }           
         }
     }

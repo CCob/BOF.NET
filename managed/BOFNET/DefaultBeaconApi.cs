@@ -8,8 +8,11 @@ namespace BOFNET {
     public class DefaultBeaconApi : BeaconApi {
         public TextWriter Console { get; }
 
-        public DefaultBeaconApi(BeaconOutputWriter consoleWriter) {
+        public Runtime.LoadAssembyInAppDomainDelegate LoadAssemblyInAppDomain { get; }
+
+        public DefaultBeaconApi(BeaconOutputWriter consoleWriter, Runtime.LoadAssembyInAppDomainDelegate loadAssembyInAppDomain) {
             this.Console = consoleWriter;
+            this.LoadAssemblyInAppDomain = loadAssembyInAppDomain;
         }
     }
 }

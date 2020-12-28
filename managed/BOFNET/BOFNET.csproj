@@ -1,28 +1,36 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Library</OutputType>
+    <!--<TargetFrameworks>net40;net35</TargetFrameworks>-->
     <TargetFrameworks>net40;net35</TargetFrameworks>
   </PropertyGroup>
   
 <!-- .NET Standard 2.0 references, compilation flags and build options -->
-    <PropertyGroup Condition=" '$(TargetFramework)' == 'net35'">      
-    </PropertyGroup>
+  <PropertyGroup Condition=" '$(TargetFramework)' == 'net35'">      
+  </PropertyGroup>
 
-<!-- .NET 4.5 references, compilation flags and build options -->
-  <ItemGroup Condition=" '$(TargetFramework)' == 'net45' ">
-    <Reference Include="mscorlib" />
-    <Reference Include="System" />
-    <Reference Include="System.Core" />
-    <Reference Include="Microsoft.CSharp" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Web" />
-    <Reference Include="System.Drawing" />
-    <Reference Include="System.Security" />
-    <Reference Include="System.Xml" />
-    <Reference Include="System.Configuration" />
+<!-- .NET 4.0 references, compilation flags and build options -->
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net40' ">
+    <Reference Include="Boo.Lang">
+      <HintPath>..\lib\Boo.Lang.dll</HintPath>      
+    </Reference>
+    <Reference Include="Boo.Lang.Compiler">
+      <HintPath>..\lib\Boo.Lang.Compiler.dll</HintPath>
+    </Reference>
+    <Reference Include="Boo.Lang.Parser">
+      <HintPath>..\lib\Boo.Lang.Parser.dll</HintPath>
+    </Reference>
+    <Reference Include="Boo.Lang.Extensions">
+      <HintPath>..\lib\Boo.Lang.Extensions.dll</HintPath>
+    </Reference>
   </ItemGroup>
+  
   <ItemGroup>
     <Folder Include="Properties\" />
+  </ItemGroup>
+  
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net40'">
+    <PackageReference Include="Costura.Fody" Version="4.1.0" />
   </ItemGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net40|AnyCPU'">

@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using System.Reflection;
 
 namespace BOFNET.Bofs {
     public class Initializer : BeaconObject {
@@ -9,7 +7,8 @@ namespace BOFNET.Bofs {
         public Initializer(BeaconApi api) : base(api) { }   
 
         public override void Go(byte[] assemblyData) {
-            BeaconConsole.WriteLine($"[+] BOFNET Runtime Initalized, assembly size {assemblyData.Length}, .NET Runtime Version: {Environment.Version.ToString()}");
+            Runtime.RegisterRuntimeAssembly(assemblyData);
+            BeaconConsole.WriteLine($"[+] BOFNET Runtime Initalized, assembly size {assemblyData.Length}, .NET Runtime Version: {Environment.Version}");     
         }
     }
 }

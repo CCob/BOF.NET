@@ -8,6 +8,10 @@ namespace BOFNET.Bofs.Jobs {
         public JobRunner(BeaconApi api) : base(api) {
         }
 
+        public AppDomain LoadAssemblyInAppDomain(string appDomain, byte[] data, int len) {           
+            return null;
+        }
+
         public override void Go(string[] args) {
 
             if(args.Length == 0) {
@@ -16,7 +20,7 @@ namespace BOFNET.Bofs.Jobs {
             }
 
             BeaconJobWriter btw = new BeaconJobWriter();
-            BeaconObject bo = Runtime.CreateBeaconObject(args[0], btw);
+            BeaconObject bo = Runtime.CreateBeaconObject(args[0], btw, new Runtime.LoadAssembyInAppDomainDelegate(LoadAssemblyInAppDomain));
             BeaconJob beaconJob = new BeaconJob(bo, args.Skip(1).ToArray(), btw);
             
             Runtime.Jobs[beaconJob.Thread.ManagedThreadId] = beaconJob;

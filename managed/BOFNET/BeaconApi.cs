@@ -3,6 +3,7 @@
 
 namespace BOFNET {
     public interface BeaconApi {
-        TextWriter Console { get; } 
+        TextWriter Console { get; }
+        Runtime.LoadAssembyInAppDomainDelegate LoadAssemblyInAppDomain { get; }
     }
 }

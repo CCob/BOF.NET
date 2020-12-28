@@ -9,7 +9,15 @@ using System.Text;
 namespace BOFNET {
     public class Runtime {
 
-        public static Dictionary<string, Assembly> LoadedAssemblies { get; private set; } = new Dictionary<string, Assembly>();
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        public delegate AppDomain LoadAssembyInAppDomainDelegate([MarshalAs(UnmanagedType.LPWStr)] string appDomainName, [MarshalAs(UnmanagedType.LPArray)] byte[] data, int len);
+
+        public class AssemblyInfo {
+            public byte[] AssemblyData;
+            public Assembly Assembly;
+        }
+
+        public static Dictionary<string, AssemblyInfo> LoadedAssemblies { get; private set; } = new Dictionary<string, AssemblyInfo>();
 
         public static Dictionary<int, BeaconJob> Jobs { get; private set; } = new Dictionary<int, BeaconJob>();
 
@@ -20,10 +28,18 @@ namespace BOFNET {
             [MarshalAs(UnmanagedType.LPWStr)] string lpCmdLine, out int pNumArgs);
 
         private static Type FindType(string name) {
+
+            //Try to get based on fully qualified name first
+            Type type = Type.GetType(name);
+            if(type != null) {
+                return type;
+            }
+
+            //Coulnd't find it, so lets search all assemblies
             var results = AppDomain.CurrentDomain.GetAssemblies()
                .SelectMany(s => s.GetTypes())
                .Where(p => p.Name == name || p.FullName == name);
-
+ 
             if (results.Count() > 1) {
                 throw new AmbiguousMatchException();
             }
@@ -52,11 +68,16 @@ namespace BOFNET {
         public static Assembly LoadAssembly(byte[] assemblyData) {
             Assembly assembly = AppDomain.CurrentDomain.Load(assemblyData);
             AssemblyName assemblyName = new AssemblyName(assembly.FullName);
-            LoadedAssemblies[assemblyName.Name] = assembly;
+            AssemblyInfo ai = new AssemblyInfo {
+                AssemblyData = assemblyData,
+                Assembly = assembly
+            };
+
+            LoadedAssemblies[assemblyName.Name] = ai;
             return assembly;
         }
 
-        public static BeaconObject CreateBeaconObject(string bofName, BeaconOutputWriter bow) {
+        public static BeaconObject CreateBeaconObject(string bofName, BeaconOutputWriter bow, LoadAssembyInAppDomainDelegate loadAssembyInAppDomain) {
 
             Type bofType = FindType(bofName);
 
@@ -64,20 +85,34 @@ namespace BOFNET {
                 throw new TypeLoadException($"[!] Failed to find type {bofName} within BOFNET AppDomain, have you loaded the containing assembly yet?");
             }
 
-            BeaconObject bo = (BeaconObject)Activator.CreateInstance(bofType, new object[] { new DefaultBeaconApi(bow) });
+            BeaconObject bo = (BeaconObject)Activator.CreateInstance(bofType, new object[] { new DefaultBeaconApi(bow, loadAssembyInAppDomain) });
             return bo;
         }
 
-        public static void InvokeBof(long consoleCallback, string bofName, object args) {
+        public static void RegisterRuntimeAssembly(byte[] assemblyData) {
+            Runtime.AssemblyInfo ai = new Runtime.AssemblyInfo {
+                Assembly = Assembly.GetExecutingAssembly(),
+                AssemblyData = assemblyData
+            };
+            Runtime.LoadedAssemblies["BOFNET"] = ai;
+        }
 
+        public static void SetupAssemblyResolver() {
+            Debug.WriteLine($"Running resolver from {AppDomain.CurrentDomain.FriendlyName}");
             if (firstInit) {
-                AppDomain.CurrentDomain.AssemblyResolve += Runtime.CurrentDomain_AssemblyResolve;
-                LoadedAssemblies["BOFNET"] = Assembly.GetExecutingAssembly();
+                AppDomain.CurrentDomain.AssemblyResolve += CurrentDomain_AssemblyResolve;
                 firstInit = false;
             }
+        }
 
+        public static void InvokeBof(long consoleCallback, long loadAssemblyCallback, string bofName, object args) {
+
+            SetupAssemblyResolver();
+
+            LoadAssembyInAppDomainDelegate loadAssembyInAppDomain = (LoadAssembyInAppDomainDelegate)Marshal.GetDelegateForFunctionPointer((IntPtr)(loadAssemblyCallback),
+                                                                                                       typeof(LoadAssembyInAppDomainDelegate));
             BeaconConsoleWriter.BeaconConsoleWriterDelegate nativeDelagte =
-                (BeaconConsoleWriter.BeaconConsoleWriterDelegate)Marshal.GetDelegateForFunctionPointer(new IntPtr(consoleCallback),
+                (BeaconConsoleWriter.BeaconConsoleWriterDelegate)Marshal.GetDelegateForFunctionPointer((IntPtr)(consoleCallback),
                                                                                                        typeof(BeaconConsoleWriter.BeaconConsoleWriterDelegate));
             using (BeaconConsoleWriter bcw = new BeaconConsoleWriter(nativeDelagte)) {
 
@@ -88,7 +123,7 @@ namespace BOFNET {
 
                 try {
 
-                    BeaconObject bo = CreateBeaconObject(bofName, bcw);
+                    BeaconObject bo = CreateBeaconObject(bofName, bcw, loadAssembyInAppDomain);
 
                     if (args is string cmdLine) {
                         if (!string.IsNullOrEmpty(cmdLine))
@@ -130,7 +165,7 @@ namespace BOFNET {
 
             AssemblyName assemblyName = new AssemblyName(args.Name);
             if (LoadedAssemblies.ContainsKey(assemblyName.Name)) {
-                return LoadedAssemblies[assemblyName.Name];
+                return LoadedAssemblies[assemblyName.Name].Assembly;
             } else {
                 return null;
             }
