@@ -12,6 +12,8 @@ namespace BOFNET {
 
         private class BeaconStream : MemoryStream {
 
+            object syncLock = new object();
+
             public uint FlushTrigger { get; set; } = 4096;
 
             Thread ownerThread;
@@ -23,9 +25,11 @@ namespace BOFNET {
             }
 
             public override void Write(byte[] buffer, int offset, int count) {
-                base.Write(buffer, offset, count);
-                if(Position > FlushTrigger) {
-                    Flush();
+                lock (syncLock) {
+                    base.Write(buffer, offset, count);
+                    if (Position > FlushTrigger) {
+                        Flush();
+                    }
                 }
             }
 

@@ -24,6 +24,16 @@
       <HintPath>..\lib\Boo.Lang.Extensions.dll</HintPath>
     </Reference>
   </ItemGroup>
+  <ItemGroup>
+    <COMReference Include="mscoree.dll">
+      <Guid>5477469e-83b1-11d2-8b49-00a0c9b7c9c4</Guid>
+      <VersionMajor>2</VersionMajor>
+      <VersionMinor>4</VersionMinor>
+      <Lcid>0</Lcid>
+      <WrapperTool>tlbimp</WrapperTool>
+      <Isolated>false</Isolated>
+    </COMReference>
+  </ItemGroup>
   
   <ItemGroup>
     <Folder Include="Properties\" />
@@ -31,6 +41,10 @@
   
   <ItemGroup Condition=" '$(TargetFramework)' == 'net40'">
     <PackageReference Include="Costura.Fody" Version="4.1.0" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <PackageReference Include="ModuleInit.Fody" Version="2.1.1" />
   </ItemGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net40|AnyCPU'">

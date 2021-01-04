@@ -10,9 +10,17 @@ namespace BOFNET {
 
         public Runtime.LoadAssembyInAppDomainDelegate LoadAssemblyInAppDomain { get; }
 
-        public DefaultBeaconApi(BeaconOutputWriter consoleWriter, Runtime.LoadAssembyInAppDomainDelegate loadAssembyInAppDomain) {
+        public BeaconUseToken BeaconUseToken { get; }
+
+        public BeaconRevertToken BeaconRevertToken { get; }
+
+        public DefaultBeaconApi(BeaconOutputWriter consoleWriter, Runtime.LoadAssembyInAppDomainDelegate loadAssembyInAppDomain, 
+            BeaconUseToken beaconUseToken, BeaconRevertToken beaconRevertToken) {
+
             this.Console = consoleWriter;
             this.LoadAssemblyInAppDomain = loadAssembyInAppDomain;
+            this.BeaconUseToken = beaconUseToken;
+            this.BeaconRevertToken = beaconRevertToken;
         }
     }
 }

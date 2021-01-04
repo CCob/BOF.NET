@@ -3,14 +3,18 @@
 namespace BOFNET {
     public abstract class BeaconObject {
 
-        public BeaconApi Api { get; }
-
         public Runtime.LoadAssembyInAppDomainDelegate LoadAssembyInAppDomain { get; }
 
         public TextWriter BeaconConsole { get; }
 
+        public BeaconUseToken BeaconUseToken { get; }
+
+        public BeaconRevertToken BeaconRevertToken { get; }
+
         public BeaconObject(BeaconApi api) {
             BeaconConsole = api.Console;
+            BeaconUseToken = api.BeaconUseToken;
+            BeaconRevertToken = api.BeaconRevertToken;
             LoadAssembyInAppDomain = api.LoadAssemblyInAppDomain;
         }
   

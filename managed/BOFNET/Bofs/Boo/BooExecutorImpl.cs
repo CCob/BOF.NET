@@ -1,4 +1,4 @@
-﻿#if (NET45)
+﻿#if (NET40)
 using Boo.Lang.Compiler;
 using Boo.Lang.Compiler.IO;
 using Boo.Lang.Compiler.Pipelines;
@@ -42,7 +42,7 @@ macro beaconPrint:
 ";
         public string Execute(string code) {
 
-#if (NET45)
+#if (NET40)
 
             string appDomain = AppDomain.CurrentDomain.FriendlyName;
             BooCompiler compiler = new BooCompiler();

