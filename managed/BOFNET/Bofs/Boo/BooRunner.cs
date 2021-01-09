@@ -3,6 +3,7 @@ using BOFNET.Bofs.Boo;
 using System;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 
 namespace BOFNET.Bofs.Boo {
     public class BooRunner : BeaconObject {
@@ -17,43 +18,32 @@ namespace BOFNET.Bofs.Boo {
               .Select(s => s[random.Next(s.Length)]).ToArray());
         }
 
-        public override void Go(string[] args) {
+        public override void Go(byte[] booCode) {
 
-            if(args.Length == 0) {
+            if(booCode == null || booCode.Length == 0) {
                 BeaconConsole.WriteLine("[!] No source code given to run, provide your BooLang code as the first and only argument");
                 return;
             }
 
+            string booCodeStr = Encoding.UTF8.GetString(booCode);
             string temporaryAppDomainName = RandomString(10);
             AppDomain temporaryAppDomain = null;
-            Runtime.AssemblyInfo runtimeAssembly = null;
-
-            foreach (var assembly in Runtime.LoadedAssemblies) {
-                temporaryAppDomain = LoadAssembyInAppDomain(temporaryAppDomainName, assembly.Value.AssemblyData, assembly.Value.AssemblyData.Length);
-                if (assembly.Key == "BOFNET") {
-                    runtimeAssembly = assembly.Value;
-                }
-            }
-
+            Runtime.AssemblyInfo runtimeAssembly = Runtime.LoadedAssemblies["BOFNET"];
+  
             try {
+
+                temporaryAppDomain = (AppDomain)InitialiseChildBOFNETAppDomain(temporaryAppDomainName, runtimeAssembly.AssemblyData, runtimeAssembly.AssemblyData.Length);
 
                 if (temporaryAppDomain == null) {
                     BeaconConsole.WriteLine("[!] Failed to setup temporary AppDomain for Boo exection");
                     return;
                 }
-
-                foreach (Assembly assembly in temporaryAppDomain.GetAssemblies()) {
-                    if (assembly.GetName().Name == "BOFNET") {
-                        Type runtime = assembly.GetType("BOFNET.Runtime");
-                        runtime.GetMethod("SetupAssemblyResolver", BindingFlags.Public | BindingFlags.Static).Invoke(null, null);
-                        runtime.GetMethod("RegisterRuntimeAssembly", BindingFlags.Public | BindingFlags.Static).Invoke(null, new object[] { runtimeAssembly.AssemblyData });
-                    }
-                }
-
+      
                 BooExecutor booExecutor = temporaryAppDomain.CreateInstanceAndUnwrap(Assembly.GetExecutingAssembly().FullName,
                                                                                       "BOFNET.Bofs.Boo.BooExecutorImpl") as BooExecutor;
 
-                booExecutor.Execute(args[0]);
+                booExecutor.Init(BeaconConsole);
+                booExecutor.Execute(booCodeStr);
 
             } finally {
                 if(temporaryAppDomain != null)

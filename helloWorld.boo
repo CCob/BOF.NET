@@ -1,0 +1,3 @@
+
+
+beaconPrint 'Hello, World!'

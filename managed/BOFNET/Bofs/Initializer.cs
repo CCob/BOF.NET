@@ -8,7 +8,7 @@ namespace BOFNET.Bofs {
 
         public override void Go(byte[] assemblyData) {
             Runtime.RegisterRuntimeAssembly(assemblyData);
-            BeaconConsole.WriteLine($"[+] BOFNET Runtime Initalized, assembly size {assemblyData.Length}, .NET Runtime Version: {Environment.Version}");     
+            BeaconConsole.WriteLine($"[+] BOFNET Runtime Initalized, assembly size {assemblyData.Length}, .NET Runtime Version: {Environment.Version} in AppDomain {AppDomain.CurrentDomain.FriendlyName}");     
         }
     }
 }

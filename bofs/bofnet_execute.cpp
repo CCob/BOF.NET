@@ -13,11 +13,9 @@ extern "C"{
 
 #include "metahost.h"
 
-
 namespace mscorlib{
     #include "mscorlib.h"
 }
-
 
 __CRT_UUID_DECL(mscorlib::_AppDomain, 0x05F696DC, 0x2B29, 0x3663, 0xad, 0x8b, 0xc4, 0x38, 0x9c, 0xf2, 0xa7, 0x13);
 
@@ -25,6 +23,8 @@ const VARIANT vtEmpty{ {{VT_EMPTY, 0, 0, 0, {0}}}};
 const VARIANT vtNull{ {{VT_NULL, 0, 0, 0, {0}}}};
 
 #define MAX_BOF_NAME 512
+
+mscorlib::_AppDomain* initialiseChildBOFNETAppDomain(const wchar_t* appDomainName, const char* assemblyData, int len);
 
 typedef HRESULT WINAPI (*CLRCreateInstancePtr)(REFCLSID clsid, REFIID riid, LPVOID *ppInterface);
 
@@ -183,22 +183,6 @@ void logConsole(char* msg, int len){
 #endif
 }
 
-mscorlib::_AppDomain* loadAssemblyInAppDomain(const wchar_t* appDomainName, const char* assemblyData, int len){
-
-    mscorlib::_AppDomain* appDomain = getAppDomain(icrh, appDomainName);
-
-    if(appDomain != nullptr){
-        mscorlib::_Assembly* assembly = loadAssembly(appDomain, assemblyData, len);
-        if(assembly != nullptr){
-            return appDomain;
-        }else{
-            appDomain->Release();
-        }
-    }
-
-    return nullptr;
-}
-
 
 const char* skipWhitespace(const char* str){
 
@@ -297,11 +281,13 @@ VARIANT setupBeaconApiPtrs(){
 
     //Bug in beacon BOF loader prevents intialiser list from properly resolving
     //function pointers, so we initialise the array the long way
-    long long ptrs[4];
+    long long ptrs[6];
     ptrs[0] = reinterpret_cast<long long>(logConsole);
-    ptrs[1] = reinterpret_cast<long long>(loadAssemblyInAppDomain);
+    ptrs[1] = reinterpret_cast<long long>(initialiseChildBOFNETAppDomain);
     ptrs[2] = reinterpret_cast<long long>(BeaconUseToken);
     ptrs[3] = reinterpret_cast<long long>(BeaconRevertToken);
+    ptrs[4] = reinterpret_cast<long long>(BeaconGetSpawnTo);
+    ptrs[5] = reinterpret_cast<long long>(BeaconInjectProcess);
 
     int numElements = sizeof(ptrs)/sizeof(long long);
 
@@ -315,6 +301,51 @@ VARIANT setupBeaconApiPtrs(){
     }
 
     return vPtrs;
+}
+
+mscorlib::_AppDomain* initialiseChildBOFNETAppDomain(const wchar_t* appDomainName, const char* assemblyData, int len){
+
+    BOF_LOCAL(OleAut32, SysAllocString);
+    BOF_LOCAL(OleAut32, SafeArrayCreate);
+    BOF_LOCAL(OleAut32, SafeArrayDestroy);
+
+    mscorlib::_AppDomain* appDomain = getAppDomain(icrh, appDomainName);
+    mscorlib::_Type* bofnetInitalizerType;
+    HRESULT hr = S_FALSE;
+
+    if(appDomain != nullptr){
+        mscorlib::_Assembly* assembly = loadAssembly(appDomain, assemblyData, len);
+        if(assembly != nullptr){
+
+            hr = assembly->GetType_2(SysAllocString(L"BOFNET.Runtime"), &bofnetInitalizerType);
+
+            if(bofnetInitalizerType == nullptr){
+                log("Failed to get BOFNET.Runtime type: 0x%x\n", hr);
+                return nullptr;
+            }
+
+            VARIANT vBeaconApis = setupBeaconApiPtrs();
+            VARIANT vBofName = createVariantString("BOFNET.Bofs.Initializer");
+            VARIANT rawData;
+            SAFEARRAYBOUND sab;
+
+            sab.lLbound   = 0;
+            sab.cElements = len;
+            rawData.vt = VT_ARRAY |  VT_UI1;
+            rawData.parray = SafeArrayCreate(VT_UI1, 1, &sab);
+            memcpy(rawData.parray->pvData, assemblyData, sab.cElements);
+
+            invokeStaticMethod(bofnetInitalizerType, SysAllocString(L"InvokeBof"), 3, &vBeaconApis, &vBofName, &rawData);
+
+            SafeArrayDestroy(rawData.parray);
+            return appDomain;
+
+        }else{
+            appDomain->Release();
+        }
+    }
+
+    return nullptr;
 }
 
 

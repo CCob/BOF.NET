@@ -3,7 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.30503.244
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BOFNET", "BOFNET\BOFNET.csproj", "{302BF2DD-9D22-4365-912B-69A51EF11E93}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BOFNET", "BOFNET\BOFNET.csproj", "{302BF2DD-9D22-4365-912B-69A51EF11E93}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BOFNET_Tests", "BOFNET_Tests\BOFNET_Tests.csproj", "{F6E95743-8277-427E-B479-A918034F67B3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{302BF2DD-9D22-4365-912B-69A51EF11E93}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{302BF2DD-9D22-4365-912B-69A51EF11E93}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{302BF2DD-9D22-4365-912B-69A51EF11E93}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F6E95743-8277-427E-B479-A918034F67B3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F6E95743-8277-427E-B479-A918034F67B3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F6E95743-8277-427E-B479-A918034F67B3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F6E95743-8277-427E-B479-A918034F67B3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

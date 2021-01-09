@@ -8,6 +8,7 @@ using Boo.Lang.Parser;
 using System;
 using System.IO;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Runtime.Remoting;
 
 namespace BOFNET.Bofs.Boo {
@@ -80,12 +81,8 @@ macro beaconPrint:
 #endif
         }
 
-        public void Init(ObjectHandle consoleFacade) {
-            console = consoleFacade.Unwrap() as TextWriter;
-        }
-
-        public void LoadAssembly(byte[] data) {
-            Assembly.Load(data);
-        }
+        public void Init(TextWriter consoleFacade) {
+            this.console = consoleFacade;
+        }    
     }
 }

@@ -10,7 +10,7 @@ namespace BOFNET {
     public class Runtime {
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        public delegate AppDomain LoadAssembyInAppDomainDelegate([MarshalAs(UnmanagedType.LPWStr)] string appDomainName, [MarshalAs(UnmanagedType.LPArray)] byte[] data, int len);
+        public delegate MarshalByRefObject InitialiseChildBOFNETAppDomain([MarshalAs(UnmanagedType.LPWStr)] string appDomainName, [MarshalAs(UnmanagedType.LPArray)] byte[] data, int len);
 
         public class AssemblyInfo {
             public byte[] AssemblyData;
@@ -77,7 +77,7 @@ namespace BOFNET {
             return assembly;
         }
 
-        public static BeaconObject CreateBeaconObject(string bofName, BeaconOutputWriter bow, LoadAssembyInAppDomainDelegate loadAssembyInAppDomain, BeaconUseToken beaconUseToken, BeaconRevertToken beaconRevertToken) {
+        public static BeaconObject CreateBeaconObject(string bofName, BeaconOutputWriter bow, InitialiseChildBOFNETAppDomain initialiseChildBOFNETAppDomain, BeaconUseToken beaconUseToken, BeaconRevertToken beaconRevertToken) {
 
             Type bofType = FindType(bofName);
 
@@ -85,7 +85,7 @@ namespace BOFNET {
                 throw new TypeLoadException($"[!] Failed to find type {bofName} within BOFNET AppDomain, have you loaded the containing assembly yet?");
             }
 
-            BeaconObject bo = (BeaconObject)Activator.CreateInstance(bofType, new object[] { new DefaultBeaconApi(bow, loadAssembyInAppDomain, beaconUseToken, beaconRevertToken) });
+            BeaconObject bo = (BeaconObject)Activator.CreateInstance(bofType, new object[] { new DefaultBeaconApi(bow, initialiseChildBOFNETAppDomain, beaconUseToken, beaconRevertToken) });
             return bo;
         }
 
@@ -111,8 +111,8 @@ namespace BOFNET {
 
             var beaconConsole = (BeaconConsoleWriter.BeaconConsoleWriterDelegate)Marshal.GetDelegateForFunctionPointer((IntPtr)(beaconApis[0]),
                                                                                                        typeof(BeaconConsoleWriter.BeaconConsoleWriterDelegate));
-            var loadAssembyInAppDomain = (LoadAssembyInAppDomainDelegate)Marshal.GetDelegateForFunctionPointer((IntPtr)(beaconApis[1]),
-                                                                                                      typeof(LoadAssembyInAppDomainDelegate));
+            var initialiseChildBOFNETAppDomain = (InitialiseChildBOFNETAppDomain)Marshal.GetDelegateForFunctionPointer((IntPtr)(beaconApis[1]),
+                                                                                                      typeof(InitialiseChildBOFNETAppDomain));
 
             var beaconUseToken = (BeaconUseToken)Marshal.GetDelegateForFunctionPointer((IntPtr)(beaconApis[2]), typeof(BeaconUseToken));
             var beaconRevertToken = (BeaconRevertToken)Marshal.GetDelegateForFunctionPointer((IntPtr)(beaconApis[3]), typeof(BeaconRevertToken));
@@ -126,7 +126,7 @@ namespace BOFNET {
 
                 try {
 
-                    BeaconObject bo = CreateBeaconObject(bofName, bcw, loadAssembyInAppDomain, beaconUseToken, beaconRevertToken);
+                    BeaconObject bo = CreateBeaconObject(bofName, bcw,initialiseChildBOFNETAppDomain, beaconUseToken, beaconRevertToken);
 
                     if (args is string cmdLine) {
                         if (!string.IsNullOrEmpty(cmdLine))
