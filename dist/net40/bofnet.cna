@@ -10,6 +10,8 @@ beacon_command_register("bofnet_job", "Execute a BOFNET class as a background jo
 beacon_command_register("bofnet_jobs", "List active BOFNET background jobs", "Synopsis: bofnet_jobs\nList active BOFNET background jobs\n");
 beacon_command_register("bofnet_jobstatus", "Dump the console buffer of an active BOFNET background job", "Synopsis: bofnet_jobstatus jobid\nDump the console buffer of an active BOFNET background job\n");
 beacon_command_register("bofnet_jobkill", "Kills a running jobs thread (warning, could leave leaked resources/sockets behind", "Synopsis: bofnet_jobkill jobid\nKills a running jobs thread (warning, could leave leaked resources/sockets behind\n");
+beacon_command_register("bofnet_boo", "Runs a Boo script in a temporary AppDomain which is then unloaded", "Synopsis: bofnet_boo filename.boo\nRuns a Boo script in a temporary AppDomain which is then unloaded\n");
+
 
 
 sub readAllFileData {
@@ -183,4 +185,9 @@ alias bofnet_jobstatus {
 
 alias bofnet_jobkill {
     fireAlias($1, "bofnet_execute", "BOFNET.Bofs.Jobs.JobKill ".$2);
+}
+
+alias bofnet_boo {
+    $booCode = readAllFileData($2);
+    bofnet_execute_raw($1, "BOFNET.Bofs.Boo.BooRunner", $booCode);
 }
