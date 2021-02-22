@@ -49,7 +49,8 @@ macro beaconPrint:
             BooCompiler compiler = new BooCompiler();
             compiler.Parameters.Input.Add(new StringInput("PrintMacro.boo", printMacro));
             compiler.Parameters.Input.Add(new StringInput("code.boo", code));
-            compiler.Parameters.Pipeline = new CompileToFile();
+            compiler.Parameters.Pipeline = new CompileToMemory();
+            compiler.Parameters.GenerateInMemory = true;
             compiler.Parameters.Ducky = true;
             compiler.Parameters.OutputType = CompilerOutputType.Auto;
             compiler.Parameters.References.Add(typeof(BooCompiler).Assembly);
