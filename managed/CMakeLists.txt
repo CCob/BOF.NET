@@ -1,3 +1,4 @@
+cmake_minimum_required (VERSION 2.8.11)
 project (BOFNET_Managed)
 include(ExternalProject)
 
@@ -5,7 +6,7 @@ include(ExternalProject)
 if(WIN32)
 	ExternalProject_Add(bofnet_managed
 		SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}
-		INSTALL_COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/BOFNET/bin/Release/net35/BOFNET.dll ${CMAKE_INSTALL_PREFIX}/net35 && ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/BOFNET/bin/Release/net461/BOFNET.dll ${CMAKE_INSTALL_PREFIX}/net461
+		INSTALL_COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/BOFNET/bin/Release/net35/BOFNET.dll ${CMAKE_INSTALL_PREFIX}/net20 && ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/BOFNET/bin/Release/net461/BOFNET.dll ${CMAKE_INSTALL_PREFIX}/net461
 		BUILD_IN_SOURCE TRUE
 		BUILD_ALWAYS TRUE
 		BUILD_COMMAND msbuild /p:Configuration=Release /m BOFNET.sln
@@ -15,9 +16,9 @@ endif()
 if(UNIX)
 	ExternalProject_Add(bofnet_managed
 		SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}
-		INSTALL_COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/BOFNET/bin/Release/netstandard2.0/BOFNET.dll ${CMAKE_INSTALL_PREFIX}/netstandard2.0 && ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/BOFNET/bin/Release/net461/BOFNET.dll ${CMAKE_INSTALL_PREFIX}/net461
+		INSTALL_COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/BOFNET/bin/Release/netstandard2.0/BOFNET.dll ${CMAKE_INSTALL_PREFIX}/net20 && ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/BOFNET/bin/Release/net461/BOFNET.dll ${CMAKE_INSTALL_PREFIX}/net461
 		BUILD_IN_SOURCE TRUE
 		BUILD_ALWAYS TRUE
-		BUILD_COMMAND dotnet restore; dotnet msbuild BOFNET.sln /p:Configuration=Release -target:BOFNET
+		BUILD_COMMAND dotnet restore COMMAND dotnet msbuild BOFNET.sln -property:Configuration=Release -target:BOFNET
 	)
 endif()
