@@ -23,8 +23,14 @@ sub readAllFileData {
 
 sub addQuotes {
     $result = "";
-    foreach $entry ($1){
-        $result = $result." \"$entry\"";
+    $idx = 0;
+    foreach $entry ($1){    
+        $entry = matches($entry, '\s*(.*)')[0];
+        $result = $result . "\"$entry\"";
+        if($idx != size($1) - 1){
+            $result = $result . " ";
+        }
+        $idx++;
     }
     return $result;
 }
@@ -188,6 +194,19 @@ alias bofnet_jobkill {
 }
 
 alias bofnet_boo {
+
+    local('$booCode @argParts $scriptArgs');
+
     $booCode = readAllFileData($2);
-    bofnet_execute_raw($1, "BOFNET.Bofs.Boo.BooRunner", $booCode);
+    $scriptArgs = "";
+
+    @argParts = sublist(@_,2);
+    if(size(@argParts) > 0){
+        $scriptArgs = addQuotes(@argParts);    
+    }
+    
+    $args = bof_pack($bid, "bZ", $booCode , $scriptArgs); 
+
+    blog ($1, "Executing script $2 with the following arguments: $scriptArgs");
+    bofnet_execute_raw($1, "BOFNET.Bofs.Boo.BooRunner", $args);
 }

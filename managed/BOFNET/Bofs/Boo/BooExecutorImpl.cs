@@ -41,7 +41,7 @@ macro beaconPrint:
 	
 	return block	
 ";
-        public string Execute(string code) {
+        public string Execute(string code, string[] args) {
 
 #if (NET40)
 
@@ -68,7 +68,7 @@ macro beaconPrint:
                 pi.SetValue(null, console, null);
 
                 MethodInfo main = context.GeneratedAssembly.EntryPoint;
-                return  (string)main.Invoke(null, new object[] { new string[] { } });
+                return  (string)main.Invoke(null, new object[] { args });
 
             } else {
                 string compilerErrors = "";

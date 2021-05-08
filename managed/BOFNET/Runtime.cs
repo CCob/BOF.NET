@@ -47,7 +47,7 @@ namespace BOFNET {
             return results.FirstOrDefault();
         }
 
-        private static string[] CommandLineToArgs(string commandLine) {
+        public static string[] CommandLineToArgs(string commandLine) {
             int argc;
             var argv = CommandLineToArgvW(commandLine, out argc);
             if (argv == IntPtr.Zero)

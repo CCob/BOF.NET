@@ -18,14 +18,22 @@ namespace BOFNET.Bofs.Boo {
               .Select(s => s[random.Next(s.Length)]).ToArray());
         }
 
-        public override void Go(byte[] booCode) {
+        public override void Go(byte[] data) {
 
-            if(booCode == null || booCode.Length == 0) {
-                BeaconConsole.WriteLine("[!] No source code given to run, provide your BooLang code as the first and only argument");
+            if (data == null || data.Length == 0) {
+                BeaconConsole.WriteLine("[!] No arguments given to run");
                 return;
             }
 
-            string booCodeStr = Encoding.UTF8.GetString(booCode);
+            Unpack args = new Unpack("bZ", data);
+
+            string booCodeStr = Encoding.UTF8.GetString((byte[])args.Values[0]);
+
+            string[] scriptArgs = new string[] { };
+            if (!string.IsNullOrEmpty((string)args.Values[1])) {
+                scriptArgs = Runtime.CommandLineToArgs((string)args.Values[1]);
+            }
+
             string temporaryAppDomainName = RandomString(10);
             AppDomain temporaryAppDomain = null;
             Runtime.AssemblyInfo runtimeAssembly = Runtime.LoadedAssemblies["BOFNET"];
@@ -43,7 +51,7 @@ namespace BOFNET.Bofs.Boo {
                                                                                       "BOFNET.Bofs.Boo.BooExecutorImpl") as BooExecutor;
 
                 booExecutor.Init(BeaconConsole);
-                booExecutor.Execute(booCodeStr);
+                booExecutor.Execute(booCodeStr, scriptArgs);
 
             } finally {
                 if(temporaryAppDomain != null)
