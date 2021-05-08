@@ -20,8 +20,6 @@ namespace BOFNET.Bofs.Boo {
 
         public override void Go(byte[] booCode) {
 
-#if (NET461)
-
             if(booCode == null || booCode.Length == 0) {
                 BeaconConsole.WriteLine("[!] No source code given to run, provide your BooLang code as the first and only argument");
                 return;
@@ -51,10 +49,6 @@ namespace BOFNET.Bofs.Boo {
                 if(temporaryAppDomain != null)
                     AppDomain.Unload(temporaryAppDomain);
             }
-#else
-            BeaconConsole.WriteLine("[!] Boo execution not supported under .NET 2.0");
-
-#endif
         }
     }
 }

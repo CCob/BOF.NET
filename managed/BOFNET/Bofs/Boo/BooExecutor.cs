@@ -1,5 +1,5 @@
 ﻿using System.IO;
-
+using System.Runtime.Remoting;
 
 namespace BOFNET.Bofs.Boo {
     public interface BooExecutor {

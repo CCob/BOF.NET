@@ -1,18 +1,16 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
-	<PropertyGroup Condition=" '$(OS)' != 'Windows_NT' ">
-		<TargetFrameworks>netstandard2.0;net461</TargetFrameworks>
-	</PropertyGroup>
-	<PropertyGroup Condition=" '$(OS)' == 'Windows_NT' "> 
-		<TargetFrameworks>net35;net461</TargetFrameworks>	
-	</PropertyGroup>	
-
   <PropertyGroup>
-    <OutputType>Library</OutputType>	
+    <OutputType>Library</OutputType>
+    <!--<TargetFrameworks>net40;net35</TargetFrameworks>-->
+    <TargetFrameworks>net40;net35</TargetFrameworks>
   </PropertyGroup>
-    
-  <!-- .NET 4.0 references, compilation flags and build options -->
-  <ItemGroup Condition=" '$(TargetFramework)' == 'net461' ">
+  
+<!-- .NET Standard 2.0 references, compilation flags and build options -->
+  <PropertyGroup Condition=" '$(TargetFramework)' == 'net35'">      
+  </PropertyGroup>
+
+<!-- .NET 4.0 references, compilation flags and build options -->
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net40' ">
     <Reference Include="Boo.Lang">
       <HintPath>..\lib\Boo.Lang.dll</HintPath>      
     </Reference>
@@ -31,19 +29,19 @@
     <Folder Include="Properties\" />
   </ItemGroup>
   
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net40'">
+    <PackageReference Include="Costura.Fody" Version="4.1.0" />
+  </ItemGroup>
+  
   <ItemGroup>
-    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.0">
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-      <PrivateAssets>all</PrivateAssets>
-    </PackageReference>
+    <PackageReference Include="ModuleInit.Fody" Version="2.1.1" />
   </ItemGroup>
 
- 
-  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net461|AnyCPU'">
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net40|AnyCPU'">
     <PlatformTarget>AnyCPU</PlatformTarget>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net461|AnyCPU'">
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net40|AnyCPU'">
     <DebugType>none</DebugType>
     <DebugSymbols>false</DebugSymbols>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
