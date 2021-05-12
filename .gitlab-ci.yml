@@ -1,0 +1,15 @@
+
+docker-build:
+    image: ccob/windows_cross:latest
+    tags: 
+        - docker
+    stage: build
+    script: 
+        - mkdir build
+        - cd build
+        - cmake -DCMAKE_BUILD_TYPE=MinSizeRel -DCMAKE_TOOLCHAIN_FILE=../toolchain/Linux-mingw64.cmake ..
+        - cmake --build .
+        - cmake --install .  
+    artifacts:
+        paths:
+            - build/dist     

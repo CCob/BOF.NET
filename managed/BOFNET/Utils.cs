@@ -1,5 +1,5 @@
 ﻿
-#if (NET40)
+#if (NET40 || NET45 || NET472)
 using Boo.Lang.Compiler;
 using Boo.Lang.Compiler.IO;
 using Boo.Lang.Compiler.Pipelines;
@@ -53,7 +53,7 @@ namespace BOFNET {
 
         public static Assembly CompileBooAssembly(string script, List<Assembly> references, string assemblyPath) {
 
-#if(NET40 || NET45)
+#if(NET40 || NET45 || NET472)
 
             //We need to supply custom CompilerParameters to turn of adding default references.
             //There is a bug in EmitAssembly that forces a permission check of destination assembly folder

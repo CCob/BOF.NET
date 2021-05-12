@@ -67,7 +67,7 @@ bofnet_execute HelloWorld @_EthicalChaos_
 
 ## Caveats
 
-Depending on the target operating system will depend on which distribution should be used (net35/net40).  The runtime will attempt to create a .NET v4 CLR using the `CLRCreateInstance` function that was made available as part of .NET v4.  If the function cannot be found, the older mechanism is used to initialise .NET v2.  Currently the native component cannot determine which managed runtime to load dynamically, so make sure you use the correct distribution folder.  A fully up to date Windows 7 will generally have .NET 4 installed, so on most occasions you will need the net40 folder from inside the dist folder.  Older operating systems like XP will depend on what is installed.
+Depending on the target operating system will depend on which distribution should be used (net20/net461).  The runtime will attempt to create a .NET v4 CLR using the `CLRCreateInstance` function that was made available as part of .NET v4.  If the function cannot be found, the older mechanism is used to initialise .NET v2.  Currently the native component cannot determine which managed runtime to load dynamically, so make sure you use the correct distribution folder.  A fully up to date Windows 7 will generally have .NET 4 installed, so on most occasions you will need the net461 folder from inside the dist folder.  Older operating systems like XP will depend on what is installed.
 
 BOF.NET will follow the same restrictions as it's native BOF counterpart.  Execution of a BOF.NET class internally uses the `inline_execute` functionality.  Therefore, any BOF.NET invocations will block beacon until it finishes.  
 
@@ -83,9 +83,11 @@ All future BOF.NET calls from here on out are typically handled by the `InvokeBo
 
 ## Building
 
-BOF.NET uses the CMake build system along with MinGW GCC compiler for generating BOF files and uses msbuild for building the managed runtime.  So prior to building, all these prerequisites need to be satisfied and available on the PATH.
+BOF.NET uses the CMake build system along with MinGW GCC compiler for generating BOF files and uses the .NET core msbuild project type for building the managed runtime.  So prior to building, all these prerequisites need to be satisfied and available on the PATH.
 
-From the checkout directory, issue the following commands 
+From the root of the checkout directory, issue the following commands:
+
+### Windows
 
 ```shell
 mkdir build
@@ -93,6 +95,26 @@ cd build
 cmake -DCMAKE_BUILD_TYPE=MinSizeRel -G "MinGW Makefiles" ..
 cmake --build .
 cmake --install .
+```
+
+### Linux
+
+On Linux we utilise a CMake toolchain file to cross compile the native BOF object using the mingw compiler.  For the managed component, please make sure the dotnet command line tool is also installed from .NET core
+
+```shell
+mkdir build
+cd build
+cmake -DCMAKE_INSTALL_PREFIX=$PWD/install -DCMAKE_BUILD_TYPE=MinSizeRel -DCMAKE_TOOLCHAIN_FILE=../toolchain/Linux-mingw64.cmake ..
+cmake --build .
+cmake --install .
+```
+
+### Docker
+
+If you'd rather build using a docker image on Linux with all the build dependencies pre installed, you can use the `ccob/windows_cross` image.
+
+```shell
+docker run --rm -it -v $(pwd):/root/bofnet ccob/windows_cross:latest /bin/bash -c "cd /root/bofnet; mkdir build; cd build; cmake -DCMAKE_INSTALL_PREFIX=$PWD/install -DCMAKE_BUILD_TYPE=MinSizeRel -DCMAKE_TOOLCHAIN_FILE=../toolchain/Linux-mingw64.cmake ..; cmake --build .; cmake --install ."
 ```
 
 Once the steps are complete, the `build\dist` folder should contain the artifacts of the build and should be ready to use within Cobalt Strike

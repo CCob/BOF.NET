@@ -20,6 +20,8 @@ namespace BOFNET.Bofs.Boo {
 
         public override void Go(byte[] data) {
 
+#if (NET40 || NET45 || NET472)
+
             if (data == null || data.Length == 0) {
                 BeaconConsole.WriteLine("[!] No arguments given to run");
                 return;
@@ -46,9 +48,9 @@ namespace BOFNET.Bofs.Boo {
                     BeaconConsole.WriteLine("[!] Failed to setup temporary AppDomain for Boo exection");
                     return;
                 }
-      
-                BooExecutor booExecutor = temporaryAppDomain.CreateInstanceAndUnwrap(Assembly.GetExecutingAssembly().FullName,
-                                                                                      "BOFNET.Bofs.Boo.BooExecutorImpl") as BooExecutor;
+
+                string assemblyName = Assembly.GetExecutingAssembly().FullName;
+                BooExecutor booExecutor = temporaryAppDomain.CreateInstanceAndUnwrap(assemblyName, "BOFNET.Bofs.Boo.BooExecutorImpl") as BooExecutor;
 
                 booExecutor.Init(BeaconConsole);
                 booExecutor.Execute(booCodeStr, scriptArgs);
@@ -57,6 +59,9 @@ namespace BOFNET.Bofs.Boo {
                 if(temporaryAppDomain != null)
                     AppDomain.Unload(temporaryAppDomain);
             }
+#else
+            BeaconConsole.WriteLine("[!] Boo execution not supported on .NET 2.0");
+#endif 
         }
     }
 }

@@ -1,4 +1,4 @@
-﻿#if (NET40)
+﻿#if (NET40 || NET45 || NET472)
 using Boo.Lang.Compiler;
 using Boo.Lang.Compiler.IO;
 using Boo.Lang.Compiler.Pipelines;
@@ -8,14 +8,15 @@ using Boo.Lang.Parser;
 using System;
 using System.IO;
 using System.Reflection;
-using System.Runtime.InteropServices;
-using System.Runtime.Remoting;
+
 
 namespace BOFNET.Bofs.Boo {
 
     public class BooExecutorImpl : MarshalByRefObject, BooExecutor {
 
         TextWriter console;
+
+#if (NET40 || NET45 || NET472)
         readonly string printMacro = @"
 import Boo.Lang.Compiler
 import Boo.Lang.Compiler.Ast
@@ -41,9 +42,10 @@ macro beaconPrint:
 	
 	return block	
 ";
+#endif
         public string Execute(string code, string[] args) {
 
-#if (NET40)
+#if (NET40 || NET45 || NET472)
 
             string appDomain = AppDomain.CurrentDomain.FriendlyName;
             BooCompiler compiler = new BooCompiler();
