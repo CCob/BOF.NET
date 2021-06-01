@@ -3,6 +3,9 @@
     <OutputType>Library</OutputType>
     <!--<TargetFrameworks>net40;net35</TargetFrameworks>-->
     <TargetFrameworks>net40;net35</TargetFrameworks>
+    <RepositoryUrl>https://github.com/CCob/BOF.NET</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/CCob/BOF.NET</PackageProjectUrl>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
   </PropertyGroup>
   
 <!-- .NET 4.0 references, compilation flags and build options -->
@@ -48,6 +51,27 @@
     <DebugSymbols>false</DebugSymbols>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
+  
+  <ItemGroup>
+    <Content Include="../../dist/net35/*.obj">
+      <PackagePath>lib/$(TargetFramework)</PackagePath>      
+      <IncludeInPackage>true</IncludeInPackage>
+      <CopyToOutput>true</CopyToOutput>
+      <BuildAction>Content</BuildAction>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  
+  <ItemGroup>
+    <Content Include="../../dist/net35/*.cna">
+      <PackagePath>lib/$(TargetFramework)</PackagePath>
+      <IncludeInPackage>true</IncludeInPackage>
+      <CopyToOutput>true</CopyToOutput>
+      <BuildAction>Content</BuildAction>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>  
+  
 
 
 </Project>
