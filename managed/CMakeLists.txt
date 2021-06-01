@@ -13,7 +13,7 @@ if(${CMAKE_HOST_SYSTEM_NAME} STREQUAL "Windows")
 else()
 	ExternalProject_Add(bofnet_managed
 		SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}
-		INSTALL_COMMAND dotnet msbuild -clp:disableconsolecolor BOFNET.sln -property:Configuration=Release -target:BOFNET:pack ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/BOFNET/bin/Release/net35/BOFNET.dll ${CMAKE_INSTALL_PREFIX}/net20 && ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/BOFNET/bin/Release/net40/BOFNET.dll ${CMAKE_INSTALL_PREFIX}/net40
+		INSTALL_COMMAND dotnet msbuild -clp:disableconsolecolor BOFNET.sln -property:Configuration=Release -target:BOFNET:pack && ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/BOFNET/bin/Release/net35/BOFNET.dll ${CMAKE_INSTALL_PREFIX}/net20 && ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/BOFNET/bin/Release/net40/BOFNET.dll ${CMAKE_INSTALL_PREFIX}/net40
 		BUILD_IN_SOURCE TRUE
 		BUILD_ALWAYS TRUE
 		BUILD_COMMAND dotnet restore COMMAND dotnet msbuild -clp:disableconsolecolor BOFNET.sln -property:Configuration=Release -target:BOFNET
