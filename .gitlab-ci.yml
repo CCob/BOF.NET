@@ -12,4 +12,5 @@ docker-build:
         - cmake --install .  
     artifacts:
         paths:
-            - build/dist     
+            - build/dist    
+            - managed/BOFNET/bin/Release/*.nupkg
