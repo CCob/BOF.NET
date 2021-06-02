@@ -24,8 +24,13 @@ namespace BOFNET.Bofs {
             BeaconConsole.WriteLine($"[+] Loaded assembly {assembly.FullName} successfully");
 
             var assemblyLoaderType = assembly.GetType("Costura.AssemblyLoader", false);
+
+            if(assemblyLoaderType == null) {
+                assemblyLoaderType = assembly.GetType("ModuleLoader");
+            }
+            
             if (assemblyLoaderType != null) {
-                BeaconConsole.WriteLine($"[=] Assembly has been prepared with Costura, running Cosutra embedded assembly loader");
+                BeaconConsole.WriteLine($"[=] Assembly has been prepared with Costura|dnMerge, running embedded assembly resolver");
                 var attachMethod = assemblyLoaderType?.GetMethod("Attach", BindingFlags.Static | BindingFlags.Public);
                 attachMethod?.Invoke(null, new object[] { });
             }
