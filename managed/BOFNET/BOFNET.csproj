@@ -37,7 +37,7 @@
   </ItemGroup>
 
   <ItemGroup Condition=" '$(TargetFramework)' == 'net40'">
-    <PackageReference Include="dnMerge" Version="0.5.12">
+    <PackageReference Include="dnMerge" Version="0.5.13">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>    
