@@ -6,6 +6,11 @@
     <RepositoryUrl>https://github.com/CCob/BOF.NET</RepositoryUrl>
     <PackageProjectUrl>https://github.com/CCob/BOF.NET</PackageProjectUrl>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <AssemblyVersion>1.0.1.0</AssemblyVersion>
+    <FileVersion>1.0.1.0</FileVersion>
+    <Authors>CCob</Authors>
+    <Company />
+    <Version>1.0.1</Version>
   </PropertyGroup>
   
 <!-- .NET 4.0 references, compilation flags and build options -->
@@ -23,10 +28,6 @@
       <HintPath>..\lib\Boo.Lang.Extensions.dll</HintPath>
     </Reference>
   </ItemGroup>
-  
-  <ItemGroup>
-    <Folder Include="Properties\" />
-  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.2">
@@ -36,7 +37,7 @@
   </ItemGroup>
 
   <ItemGroup Condition=" '$(TargetFramework)' == 'net40'">
-    <PackageReference Include="dnMerge" Version="0.5.9">
+    <PackageReference Include="dnMerge" Version="0.5.12">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>    
@@ -70,6 +71,13 @@
       <BuildAction>Content</BuildAction>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+  </ItemGroup>
+  
+  <ItemGroup>
+    <Compile Remove="Properties\**" />
+    <Content Remove="Properties\**" />
+    <EmbeddedResource Remove="Properties\**" />
+    <None Remove="Properties\**" />
   </ItemGroup>  
   
 
