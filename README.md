@@ -49,6 +49,43 @@ You can also use the shorthand method of just the class name, but this will only
 bofnet_execute HelloWorld @_EthicalChaos_
 ```
 
+## Cobalt Strike Client Integrations
+
+The BeaconObject class implements functionality to allow custom implementations of screen capture, file downloads (from memory 😊), keylogger and hash dumps.  If, for example, the built in keylogger or screen capture implementation is causing Windows Defender or other AV engines to kill your beacon, you can implement your own.  The relevant functions are documented below.
+
+```C#
+void SendScreenShot(byte[] jpgData, int session, string userName, string title)
+```
+* `jpgData` Raw JPEG image data.
+* `session` User session id the screen capture was taken from.
+* `userName` The user name running under the session.
+* `title` The title of the window to name for the screen shot.
+
+```C#
+SendKeystrokes(string keys, int session, string userName, string title)
+```
+
+* `keys` The sequence of keys captured.
+* `session` User session id the screen capture was taken from.
+* `userName` The user name running under the session.
+* `title` The title of the window to application the keys were captured from.
+
+```C#
+DownloadFile(string fileName, Stream fileData)
+```
+
+* `fileName` The file name to use for the metadata within beacon.
+* `fileData` A readable stream that will be used for the file content.
+
+`DownloadFile` will lock beacon and become unresponsive until the download completes!
+
+
+```C#
+SendHashes(UserHash[] userHashes)
+```
+
+* `userHashes` A collection of usernames that have been captured.
+
 ## Beacon Command Reference
 
 | Command                                | Description                                                              |
@@ -63,7 +100,7 @@ bofnet_execute HelloWorld @_EthicalChaos_
 | bofnet_jobs                            | List all currently active BOF.NET jobs                                   |
 | bofnet_jobstatus *job_id*              | Dump any pending console buffer from the background job                  |
 | bofnet_jobkill *job_id*                | Dump any pending console buffer from the background job then kill it.  Warning, can cause deadlocks when terminating a thread that have transitioned into native code                  |
-| bofnet_boo *booscript.boo*             | Compile and execute Boo script in seperate temporary AppDomain           |    
+| bofnet_boo *booscript.boo*             | Compile and execute Boo script in seperate temporary AppDomain           |
 
 ## Caveats
 
