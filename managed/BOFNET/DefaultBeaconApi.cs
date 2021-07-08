@@ -14,13 +14,16 @@ namespace BOFNET {
 
         public BeaconRevertToken BeaconRevertToken { get; }
 
+        public BeaconCallbackWriter BeaconCallbackWriter { get; }
+
         public DefaultBeaconApi(BeaconOutputWriter consoleWriter, Runtime.InitialiseChildBOFNETAppDomain initialiseChildBOFNETAppDomain, 
-            BeaconUseToken beaconUseToken, BeaconRevertToken beaconRevertToken) {
+            BeaconUseToken beaconUseToken, BeaconRevertToken beaconRevertToken, BeaconCallbackWriter beaconCallbackWriter) {
 
             this.Console = consoleWriter;
             this.InitialiseChildBOFNETAppDomain = initialiseChildBOFNETAppDomain;
             this.BeaconUseToken = beaconUseToken;
             this.BeaconRevertToken = beaconRevertToken;
+            this.BeaconCallbackWriter = beaconCallbackWriter;
         }
     }
 }

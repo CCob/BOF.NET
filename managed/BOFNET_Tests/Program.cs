@@ -16,6 +16,8 @@ namespace BOFNET_Tests {
             public BeaconUseToken BeaconUseToken => throw new NotImplementedException();
 
             public BeaconRevertToken BeaconRevertToken => throw new NotImplementedException();
+
+            public BeaconCallbackWriter BeaconCallbackWriter => throw new NotImplementedException();
         }
 
 

@@ -7,9 +7,6 @@ using System.Threading;
 namespace BOFNET {
     public class BeaconConsoleWriter : BeaconOutputWriter {
 
-        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        public delegate void BeaconConsoleWriterDelegate([MarshalAs(UnmanagedType.LPArray)] byte[] data, int len);
-
         private class BeaconStream : MemoryStream {
 
             object syncLock = new object();
@@ -17,10 +14,10 @@ namespace BOFNET {
             public uint FlushTrigger { get; set; } = 4096;
 
             Thread ownerThread;
-            BeaconConsoleWriterDelegate beaconConsoleWriter;
+            BeaconCallbackWriter beaconCallbackWriter;
 
-            public BeaconStream(BeaconConsoleWriterDelegate beaconConsoleWriter, Thread ownerThread) {
-                this.beaconConsoleWriter = beaconConsoleWriter;
+            public BeaconStream(BeaconCallbackWriter beaconCallbackWriter, Thread ownerThread) {
+                this.beaconCallbackWriter = beaconCallbackWriter;
                 this.ownerThread = ownerThread;
             }
 
@@ -36,21 +33,21 @@ namespace BOFNET {
             public override void Flush() {
                 base.Flush();
 
-                if (Position > 0 && beaconConsoleWriter != null && ownerThread == Thread.CurrentThread) {
+                if (Position > 0 && beaconCallbackWriter != null && ownerThread == Thread.CurrentThread) {
                     byte[] data = new byte[Position];
                     Seek(0, SeekOrigin.Begin);
                     Read(data, 0, data.Length);
-                    beaconConsoleWriter(data, data.Length);
+                    beaconCallbackWriter(OutputTypes.CALLBACK_OUTPUT_UTF8, data, data.Length);
                     Seek(0, SeekOrigin.Begin);
                 }                            
             }
 
             public override void Close() {
-                beaconConsoleWriter = null;
+                beaconCallbackWriter = null;
             }
         }
 
-        public BeaconConsoleWriter(BeaconConsoleWriterDelegate beaconConsoleWriter) : base(new BeaconStream(beaconConsoleWriter, Thread.CurrentThread)){
+        public BeaconConsoleWriter(BeaconCallbackWriter beaconConsoleWriter) : base(new BeaconStream(beaconConsoleWriter, Thread.CurrentThread)){
         }
  
         protected override void Dispose(bool disposing) {

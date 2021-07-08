@@ -20,7 +20,7 @@ namespace BOFNET.Bofs.Jobs {
             }
 
             BeaconJobWriter btw = new BeaconJobWriter();
-            BeaconObject bo = Runtime.CreateBeaconObject(args[0], btw, new Runtime.InitialiseChildBOFNETAppDomain(InitialiseChildBOFNETAppDomain), null, null);
+            BeaconObject bo = Runtime.CreateBeaconObject(args[0], btw, new Runtime.InitialiseChildBOFNETAppDomain(InitialiseChildBOFNETAppDomain), null, null, null);
             BeaconJob beaconJob = new BeaconJob(bo, args.Skip(1).ToArray(), btw);
             
             Runtime.Jobs[beaconJob.Thread.ManagedThreadId] = beaconJob;

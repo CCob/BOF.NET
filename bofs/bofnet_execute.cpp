@@ -175,9 +175,9 @@ mscorlib::_Assembly* loadAssembly(mscorlib::_AppDomain* appDomain, const char* d
     return result;
 }
 
-void logConsole(char* msg, int len){
+void logConsole(int type, char* msg, int len){
 #ifdef _BOF_
-    BeaconOutput(CALLBACK_OUTPUT_UTF8, msg, len);
+    BeaconOutput(type, msg, len);
 #else
     printf(msg);
 #endif
