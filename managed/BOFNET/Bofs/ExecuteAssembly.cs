@@ -28,6 +28,7 @@ namespace BOFNET.Bofs
                     var memStreamWriter = new StreamWriter(memStream);
                     memStreamWriter.AutoFlush = true;
                     Console.SetOut(memStreamWriter);
+                    Console.SetError(memStreamWriter);
 
                     // Call entry point
                     Assembly assembly = Runtime.LoadedAssemblies[args[0]].Assembly;
