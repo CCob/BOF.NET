@@ -6,11 +6,11 @@
     <RepositoryUrl>https://github.com/CCob/BOF.NET</RepositoryUrl>
     <PackageProjectUrl>https://github.com/CCob/BOF.NET</PackageProjectUrl>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
-    <AssemblyVersion>1.0.0.0</AssemblyVersion>
-    <FileVersion>1.1.0.0</FileVersion>
+    <AssemblyVersion>1.1.1.0</AssemblyVersion>
+    <FileVersion>1.1.1.0</FileVersion>
     <Authors>CCob</Authors>
     <Company />
-    <Version>1.1.0</Version>
+    <Version>1.1.1</Version>
   </PropertyGroup>
   
 <!-- .NET 4.0 references, compilation flags and build options -->
@@ -54,7 +54,7 @@
   </PropertyGroup>
   
   <ItemGroup>
-    <Content Include="../../dist/net35/*.obj">
+    <Content Include="../../build/dist/net20/*.obj">
       <PackagePath>lib/$(TargetFramework)</PackagePath>      
       <IncludeInPackage>true</IncludeInPackage>
       <CopyToOutput>true</CopyToOutput>
@@ -64,7 +64,7 @@
   </ItemGroup>
   
   <ItemGroup>
-    <Content Include="../../dist/net35/*.cna">
+    <Content Include="../../build/dist/net20/*.cna">
       <PackagePath>lib/$(TargetFramework)</PackagePath>
       <IncludeInPackage>true</IncludeInPackage>
       <CopyToOutput>true</CopyToOutput>
