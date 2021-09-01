@@ -6,7 +6,7 @@ BOF.NET is a small native BOF object combined with the BOF.NET managed runtime t
 
 ## Getting started
 
-Implementing you first BOF.NET class is simple.  Add a reference to the BOF.NET runtime DLL from the dist folder and create a class that inherits from `BeaconObject`.  A mandatory constructor with a  `BeaconApi` object as the only parameter is needed.  This should be passed along to the `BeaconObject` base constructor.
+Implementing you first BOF.NET class is simple.  Add a reference to the BOF.NET runtime DLL from the [BOFNET NuGet](https://www.nuget.org/packages/BOFNET) package and create a class that inherits from `BeaconObject`.  A mandatory constructor with a  `BeaconApi` object as the only parameter is needed.  This should be passed along to the `BeaconObject` base constructor.
 
 Finally override the `Go` function.  Arguments will be pre-processed for you exactly how a `Main` function behaves inside a normal .NET assembly. 
 
@@ -21,7 +21,18 @@ namespace BOFNET.Bofs {
 }
 ```
 
-Once you have compiled your BOF.NET assembly, you can load the bofnet.cna aggresor script from the dist folder into Cobalt Strike and being using your BOF.NET class.
+Once you have compiled your BOF.NET assembly, download the .nupkg from the releases page or nuget.org.  Open the package in your favorite zip application and extract the contents of the lib folder.  Move the BOFNET.DLL from your preferred target framework folder into the same folder as the .cna and BOF obj files.  The final structre should look like this.
+
+```
+.
++--
+|  +-- BOFNET.dll
+|  +-- bofnet.cna
+|  +-- bofnet_execute.cpp.x86.obj
+|  +-- bofnet_execute.cpp.x64.obj 
+```
+
+Load the bofnet.cna aggresor script into Cobalt Strike and being using your BOF.NET class.
 
 Before any BOF.NET class can be used, the BOF.NET runtime needs to be initialised within the beacon instance.
 
@@ -104,7 +115,7 @@ SendHashes(UserHash[] userHashes)
 
 ## Caveats
 
-Depending on the target operating system will depend on which distribution should be used (net20/net461).  The runtime will attempt to create a .NET v4 CLR using the `CLRCreateInstance` function that was made available as part of .NET v4.  If the function cannot be found, the older mechanism is used to initialise .NET v2.  Currently the native component cannot determine which managed runtime to load dynamically, so make sure you use the correct distribution folder.  A fully up to date Windows 7 will generally have .NET 4 installed, so on most occasions you will need the net461 folder from inside the dist folder.  Older operating systems like XP will depend on what is installed.
+Depending on the target operating system will depend on which distribution should be used (net35/net40).  The runtime will attempt to create a .NET v4 CLR using the `CLRCreateInstance` function that was made available as part of .NET v4.  If the function cannot be found, the older mechanism is used to initialise .NET v2.  Currently the native component cannot determine which managed runtime to load dynamically, so make sure you use the correct distribution folder.  A fully up to date Windows 7 will generally have .NET 4 installed, so on most occasions you will need the net461 folder from inside the dist folder.  Older operating systems like XP will depend on what is installed.
 
 BOF.NET will follow the same restrictions as it's native BOF counterpart.  Execution of a BOF.NET class internally uses the `inline_execute` functionality.  Therefore, any BOF.NET invocations will block beacon until it finishes.  
 
