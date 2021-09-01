@@ -64,7 +64,7 @@
   </ItemGroup>
   
   <ItemGroup>
-    <Content Include="../../build/dist/net20/*.cna">
+    <Content Include="../../*.cna">
       <PackagePath>lib/$(TargetFramework)</PackagePath>
       <IncludeInPackage>true</IncludeInPackage>
       <CopyToOutput>true</CopyToOutput>

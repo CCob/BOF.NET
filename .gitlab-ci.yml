@@ -8,8 +8,13 @@ docker-build:
         - mkdir build
         - cd build
         - cmake -DCMAKE_BUILD_TYPE=MinSizeRel -DCMAKE_TOOLCHAIN_FILE=../toolchain/Linux-mingw64.cmake ..
-        - cmake --build .
-        - cmake --install .  
+        - cmake --build --target bofs_x64 .
+        - cmake --build --target bofs_x86 .
+        - cd bofs
+        - make install
+        - cd ..
+        - cmake --build --target bofnet_managed
+        - cmake --install .
     artifacts:
         paths:
             - build/dist    
