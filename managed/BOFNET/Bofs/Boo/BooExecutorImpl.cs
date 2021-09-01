@@ -69,6 +69,10 @@ macro beaconPrint:
                 PropertyInfo pi = booBeaconConsole.GetProperty("Console", BindingFlags.Public | BindingFlags.Static);
                 pi.SetValue(null, console, null);
 
+                if(context.GeneratedAssembly.EntryPoint == null) {
+                    return "[!] No entry point available to execute";
+                }
+
                 MethodInfo main = context.GeneratedAssembly.EntryPoint;
                 return  (string)main.Invoke(null, new object[] { args });
 
