@@ -5,7 +5,6 @@ beacon_command_register("bofnet_list", "List all executable BOFNET's available",
 beacon_command_register("bofnet_listassemblies", "List all loadded assembiles inside BOFNET", "Synopsis: bofnet_listassemblies \nList all loadded assembiles inside BOFNET");
 beacon_command_register("bofnet_execute", "Execute a BOFNET class", "Synopsis: bofnet_execute class arg1 arg2 ...\nExecute's a BOFNET class along with all arguments supplied.  Arguments with spaces should be quoted.\n");
 beacon_command_register("bofnet_load", "Load a .NET assembly containing additional BOFNET classes", "Synopsis: bofnet_load assembly_path\nLoad a .NET assembly containing additional BOFNET classes\n");
-beacon_command_register("bofnet_loadbig", "Loads assemblies larger than the 1M limit by chunking the data", "Synopsis: bofnet_loadbig assembly_path\nLoads assemblies larger than the 1M limit by chunking the data\n");
 beacon_command_register("bofnet_job", "Execute a BOFNET class as a background job in a seperate threead", "Synopsis: bofnet_job class arg1 arg2\nExecute a BOFNET class as a background job\n");
 beacon_command_register("bofnet_jobs", "List active BOFNET background jobs", "Synopsis: bofnet_jobs\nList active BOFNET background jobs\n");
 beacon_command_register("bofnet_jobstatus", "Dump the console buffer of an active BOFNET background job", "Synopsis: bofnet_jobstatus jobid\nDump the console buffer of an active BOFNET background job\n");
