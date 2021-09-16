@@ -113,6 +113,7 @@ SendHashes(UserHash[] userHashes)
 | bofnet_jobkill *job_id*                | Dump any pending console buffer from the background job then kill it.  Warning, can cause deadlocks when terminating a thread that have transitioned into native code                  |
 | bofnet_boo *booscript.boo*             | Compile and execute Boo script in seperate temporary AppDomain           |
 | bofnet_executeassembly *assembly_name* [*args*]    | Execute a standard .NET assembly calling the entry point, supplying optional arguments           | 
+| bofnet_patchexit                       | Re-patch .NET's Environment.Exit() to prevent exit. Performed by default during `bofnet_init` but useful if DLLs are unhooked later.           | 
 
 ## Caveats
 

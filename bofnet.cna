@@ -11,7 +11,7 @@ beacon_command_register("bofnet_jobstatus", "Dump the console buffer of an activ
 beacon_command_register("bofnet_jobkill", "Kills a running jobs thread (warning, could leave leaked resources/sockets behind", "Synopsis: bofnet_jobkill jobid\nKills a running jobs thread (warning, could leave leaked resources/sockets behind\n");
 beacon_command_register("bofnet_boo", "Runs a Boo script in a temporary AppDomain which is then unloaded", "Synopsis: bofnet_boo filename.boo\nRuns a Boo script in a temporary AppDomain which is then unloaded\n");
 beacon_command_register("bofnet_executeassembly", "Execute a standard .NET assembly calling the entry point", "Synopsis: bofnet_executeassembly assembly_name arg1 arg2 ...\nExecute a standard .NET assembly calling the entry point and passing all arguments supplied.\n");
-
+beacon_command_register("bofnet_patchexit", "Re-patch .NET's Environment.Exit() to prevent exit", "Synopsis: bofnet_patchexit \nRe-patch .NET's Environment.Exit() to prevent exit");
 
 sub readAllFileData {
     $fileHandle = openf($1);
@@ -223,7 +223,17 @@ alias bofnet_executeassembly {
         $bofArguments = " ".addQuotes(@argParts)."\x00";    
     }
    
-	btask($1, "Execute a standard .NET assembly");
+	btask($1, "Executing a standard .NET assembly");
 	beacon_inline_execute($1, $bofnetNative, "go", "BOFNET.Bofs.ExecuteAssembly ".$2.$bofArguments);  
 
+}
+
+alias bofnet_patchexit {
+    $bofnetNative = loadBOFNativeRuntime($1);
+    if($bofnetNative != $null){
+        return;
+    }
+
+	btask($1, "Re-patching .NET Environment.Exit()");
+	beacon_inline_execute($1, $bofnetNative, "go", "BOFNET.Bofs.PatchEnvironmentExit\x00");
 }
