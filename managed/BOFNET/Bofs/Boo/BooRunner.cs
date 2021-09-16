@@ -31,6 +31,11 @@ namespace BOFNET.Bofs.Boo {
 
             string booCodeStr = Encoding.UTF8.GetString((byte[])args.Values[0]);
 
+            if (string.IsNullOrEmpty(booCodeStr)) {
+                BeaconConsole.WriteLine("[!] Boo code is empty, bailing!");
+                return;
+            }
+
             string[] scriptArgs = new string[] { };
             if (!string.IsNullOrEmpty((string)args.Values[1])) {
                 scriptArgs = Runtime.CommandLineToArgs((string)args.Values[1]);
