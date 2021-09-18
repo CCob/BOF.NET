@@ -116,11 +116,10 @@ namespace BOFNET {
         public static BeaconObject CreateBeaconObject(string bofName, BeaconOutputWriter bow, InitialiseChildBOFNETAppDomain initialiseChildBOFNETAppDomain, BeaconUseToken beaconUseToken, BeaconRevertToken beaconRevertToken, BeaconCallbackWriter beaconCallbackWriter) {
 
             Type bofType = FindType(bofName);
-
-            if (bofType == null) {
+            if (bofType == null)
+            {
                 throw new TypeLoadException($"[!] Failed to find type {bofName} within BOFNET AppDomain, have you loaded the containing assembly yet?");
             }
-
             BeaconObject bo = (BeaconObject)Activator.CreateInstance(bofType, new object[] { new DefaultBeaconApi(bow, initialiseChildBOFNETAppDomain, beaconUseToken, beaconRevertToken, beaconCallbackWriter) });
             return bo;
         }
@@ -212,22 +211,18 @@ namespace BOFNET {
 
         public static bool PatchEnvironmentExit()
         {
-            // Credit MDSec: https://www.mdsec.co.uk/2020/08/massaging-your-clr-preventing-environment-exit-in-in-process-net-assemblies/
+            // Credit Peter Winter-Smith @ MDSec: https://www.mdsec.co.uk/2020/08/massaging-your-clr-preventing-environment-exit-in-in-process-net-assemblies/
             var methods = new List<MethodInfo>(typeof(Environment).GetMethods(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic));
             var exitMethod = methods.Find((MethodInfo mi) => mi.Name == "Exit");
             RuntimeHelpers.PrepareMethod(exitMethod.MethodHandle);
             var exitMethodPtr = exitMethod.MethodHandle.GetFunctionPointer();
-            unsafe
-            {
+            unsafe {
                 IntPtr target = exitMethod.MethodHandle.GetFunctionPointer();
                 MEMORY_BASIC_INFORMATION mbi;
-                if (VirtualQueryEx((IntPtr)(-1), target, out mbi, (uint)Marshal.SizeOf(typeof(MEMORY_BASIC_INFORMATION))) != 0)
-                {
-                    if (mbi.Protect == (uint)AllocationProtect.PAGE_EXECUTE_READ)
-                    {
+                if (VirtualQueryEx((IntPtr)(-1), target, out mbi, (uint)Marshal.SizeOf(typeof(MEMORY_BASIC_INFORMATION))) != 0) {
+                    if (mbi.Protect == (uint)AllocationProtect.PAGE_EXECUTE_READ) {
                         uint flOldProtect;
-                        if (VirtualProtectEx((IntPtr)(-1), (IntPtr)target, (UIntPtr)1, (uint)AllocationProtect.PAGE_EXECUTE_READWRITE, out flOldProtect))
-                        {
+                        if (VirtualProtectEx((IntPtr)(-1), (IntPtr)target, (UIntPtr)1, (uint)AllocationProtect.PAGE_EXECUTE_READWRITE, out flOldProtect)) {
                             *(byte*)target = 0xc3; // ret
                             VirtualProtectEx((IntPtr)(-1), (IntPtr)target, (UIntPtr)1, flOldProtect, out flOldProtect);
                             return true;
