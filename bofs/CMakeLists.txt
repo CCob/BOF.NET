@@ -6,6 +6,9 @@ file(GLOB BOF_HDR *.h)
 add_library(bofs_x86 OBJECT ${BOF_SRC_CXX} ${BOF_SRC_C} ${BOF_HDR})
 add_library(bofs_x64 OBJECT ${BOF_SRC_CXX} ${BOF_SRC_C} ${BOF_HDR})
 
+add_executable(bofnet_test bofnet_test.cpp ${BOF_SRC_CXX} ${BOF_SRC_C} ${BOF_HDR})
+target_link_libraries(bofnet_test ${CMAKE_CURRENT_SOURCE_DIR}/ntdll_x64.lib)
+
 target_compile_options(bofs_x86 PRIVATE
      $<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>,$<CXX_COMPILER_ID:GNU>>: -fdollars-in-identifiers> -m32)
 
