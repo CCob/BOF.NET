@@ -528,10 +528,10 @@ static void goWithBypasses(char* args , int len) {
 extern "C" void go(char* args , int len) {
 
     //Setup our hardware breakpoint on AMSI and the VEH
-    //HANDLE hExHandler = setupBypasses();
+    HANDLE hExHandler = setupBypasses();
 
     goWithBypasses(args,len);
 
     //Clear our hardware breakpoints and VEH
-    //clearBypasses(hExHandler);
+    clearBypasses(hExHandler);
 }
