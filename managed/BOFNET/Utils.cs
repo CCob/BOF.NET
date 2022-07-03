@@ -63,11 +63,13 @@ namespace BOFNET {
             compiler.Parameters.OutputType = CompilerOutputType.Library;
             compiler.Parameters.Debug = false;
             compiler.Parameters.Checked = false;
-            compiler.Parameters.GenerateInMemory = true;
-            compiler.Parameters.OutputAssembly = assemblyPath;
-            compiler.Parameters.Pipeline = new CompileToFile ();
+            compiler.Parameters.GenerateInMemory = true;            
+            compiler.Parameters.Pipeline = assemblyPath != null ? new CompileToFile() : new CompileToMemory();
             compiler.Parameters.References.Add(compiler.Parameters.LoadAssembly("System", true));
             compiler.Parameters.References.Add(compiler.Parameters.LoadAssembly("System.Runtime", true));
+
+            if(assemblyPath != null)
+                compiler.Parameters.OutputAssembly = assemblyPath;
 
             foreach (Assembly reference in references) {
                 compiler.Parameters.References.Add(reference);
