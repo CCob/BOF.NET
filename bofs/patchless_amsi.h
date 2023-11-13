@@ -178,6 +178,7 @@ static void enableBreakpoint(void* function, int bpIndex){
 
     BOF_LOCAL(KERNEL32, GetThreadContext);
     BOF_LOCAL(KERNEL32, SetThreadContext);
+    BOF_LOCAL(msvcrt, memset);
 
     CONTEXT threadCtx;
     memset(&threadCtx, 0, sizeof(threadCtx));
@@ -194,6 +195,7 @@ static void clearHardwareBreakpoint(int bpIndex){
 
     BOF_LOCAL(KERNEL32, GetThreadContext);
     BOF_LOCAL(KERNEL32, SetThreadContext);
+    BOF_LOCAL(msvcrt, memset);
 
     CONTEXT threadCtx;
     memset(&threadCtx, 0, sizeof(threadCtx));

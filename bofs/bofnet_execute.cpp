@@ -85,61 +85,19 @@ static char* randString(char *str, size_t size)
 }
 
 
-static mscorlib::_AppDomain* getAppDomain(ICorRuntimeHost* icrh, const wchar_t* appDomainName){
+static mscorlib::_AppDomain* getAppDomain(ICorRuntimeHost* icrh){
 
-    BOF_LOCAL(OLE32, CLSIDFromString);
-    BOF_LOCAL(OleAut32, SysAllocString);
-    BOF_LOCAL(msvcrt, wcscmp);
+    char                    appDomainName[MAX_APPDOMAIN_NAME] = {0};
+    wchar_t                 appDomainNameWide[MAX_APPDOMAIN_NAME] = {0};
+    bool                    found = false;
+    mscorlib::_AppDomain*   appDomain = nullptr;
 
-    GUID CLSID_AppDomain;
-    HRESULT hr;
-    HDOMAINENUM hDomainEnum;
-    IUnknown* iu = nullptr;
-    mscorlib::_AppDomain* appDomain = nullptr;
-    mscorlib::_Assembly* assembly = nullptr;
-    bool found = false;
-
-    CLSIDFromString(L"{05F696DC-2B29-3663-AD8B-C4389CF2A713}", &CLSID_AppDomain);
-
-    hr = icrh->EnumDomains(&hDomainEnum);
-
-    while((hr = icrh->NextDomain(hDomainEnum, &iu)) == S_OK){
-
-        BSTR friendlyName;
-
-        appDomain = nullptr;
-        hr = iu->QueryInterface(CLSID_AppDomain, (LPVOID*)&appDomain);
-
-        if(appDomain == nullptr){
-            iu->Release();
-            continue;
-        }
-
-        hr = appDomain->get_FriendlyName(&friendlyName);
-
-        if(friendlyName && wcscmp(friendlyName, appDomainName) == 0){
-            iu->Release();
-            found = true;
-            break;
-        }
-
-        hr = appDomain->Load_2(SysAllocString(L"BOFNET"), &assembly);
-
-        if(assembly == nullptr){
-            iu->Release();
-            continue;
-        }
-
-        found = true;
-        iu->Release();
-        break;
-    }
-
-    iu = nullptr;
-    hr = icrh->CloseEnum(hDomainEnum);
-
-    if(!found){
-        appDomain = initAppDomain(icrh, appDomainName);
+    if((appDomain = (mscorlib::_AppDomain*)BeaconGetValue("AppDomain")) == nullptr){
+        appDomain = (mscorlib::_AppDomain*)calloc(sizeof(void*), 1);
+        randString(appDomainName, 10);
+        toWideChar(appDomainName, appDomainNameWide, 22);
+        appDomain = initAppDomain(icrh, appDomainNameWide);
+        BeaconAddValue("AppDomain", appDomain);
     }
 
     return appDomain;
@@ -264,7 +222,9 @@ static ICorRuntimeHost* loadCLR(bool v4){
     BOF_LOCAL(OLE32, CoInitializeEx);
     BOF_LOCAL(OLE32, CoCreateInstance);
     BOF_LOCAL(OLE32, CLSIDFromString);
-    BOF_LOCAL(KERNEL32, LoadLibraryA);
+    BOF_LOCAL(OLE32, CoInitializeSecurity);
+    BOF_LOCAL(OLE32, CoUninitialize);
+    BOF_LOCAL(KERNEL32, LoadLibraryA);    
 
     GUID                    IID_RTH, CLSID_RTH, IID_MH, CLSID_MH, CLSID_RH, IID_RH, IID_RHI;
     HRESULT                 hr;
@@ -293,6 +253,17 @@ static ICorRuntimeHost* loadCLR(bool v4){
 
     hr = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
 
+    hr = CoInitializeSecurity( //Failure of this function does not necessarily mean we failed to initialize, it will fail on repeated calls, but the values from the original call are retained
+        NULL,
+        -1,
+        NULL,
+        NULL,
+        RPC_C_AUTHN_LEVEL_DEFAULT,
+        RPC_C_IMP_LEVEL_IMPERSONATE,
+        NULL,
+        EOAC_DYNAMIC_CLOAKING,
+        NULL);
+
     if(v4 && (hr = pCLRCreateInstance(CLSID_MH, IID_MH, (LPVOID*)&pMetaHost) == S_OK)){
 
         if((hr = pMetaHost->GetRuntime(L"v4.0.30319", IID_RHI, (LPVOID*)&pRuntimeInfo)) == S_OK){
@@ -314,6 +285,7 @@ static ICorRuntimeHost* loadCLR(bool v4){
         }
     }
 
+    CoUninitialize();
     return result;
 }
 
@@ -354,6 +326,7 @@ static mscorlib::_AppDomain* initialiseChildBOFNETAppDomain(const wchar_t* appDo
     BOF_LOCAL(OleAut32, SysAllocString);
     BOF_LOCAL(OleAut32, SafeArrayCreate);
     BOF_LOCAL(OleAut32, SafeArrayDestroy);
+    BOF_LOCAL(msvcrt, memcpy);
 
     mscorlib::_AppDomain* appDomain = initAppDomain(icrh, appDomainName);
     mscorlib::_Type* bofnetInitalizerType;
@@ -411,8 +384,6 @@ static void goWithBypasses(char* args , int len) {
     mscorlib::_Type*        bofnetInitalizerType = nullptr;
     mscorlib::_AppDomain*   bofnetAppDomain = nullptr;
     char                    bofName[MAX_BOF_NAME] = {0};
-    char                    appDomainName[MAX_APPDOMAIN_NAME] = {0};
-    wchar_t                 appDomainNameWide[MAX_APPDOMAIN_NAME] = {0};
     int                     managedArgsOffset = 0;
 
     srand(GetTickCount());
@@ -429,20 +400,18 @@ static void goWithBypasses(char* args , int len) {
         return;
     }
 
-    managedArgsOffset = strlen(bofName) + 1;
-    randString(appDomainName, 10);
+    managedArgsOffset = strlen(bofName) + 1;    
     int managedArgsLength = len - managedArgsOffset;
-    toWideChar(appDomainName, appDomainNameWide, sizeof(appDomainNameWide));
 
     icrh = loadCLR(true);
     if(icrh == nullptr){
         return;
     }
 
-    bofnetAppDomain = getAppDomain(icrh, appDomainNameWide);
+    bofnetAppDomain = getAppDomain(icrh);
 
     if(bofnetAppDomain == nullptr){
-        log("[!] Failed to get app domain with name %s\n", appDomainName);
+        log("[!] Failed to get BOFNET app domain\n", 0);
         return;
     }
 
@@ -472,6 +441,8 @@ static void goWithBypasses(char* args , int len) {
         log("[+] Unloading BOFNET", 0);
         icrh->UnloadDomain(bofnetAppDomain);
         icrh->Stop();
+        bofnetAppDomain->Release();
+        BeaconRemoveValue("AppDomain");
         return;
 
     }else{
@@ -479,7 +450,7 @@ static void goWithBypasses(char* args , int len) {
         hr = bofnetAppDomain->Load_2(SysAllocString(L"BOFNET"), &bofnetAssembly);
 
         if(bofnetAssembly == nullptr){
-            log("[!] Failed to get BOFNET assembly for AppDomain %s. Have you run BOFNET.Bofs.Initializer BOF yet? : 0x%x\n", appDomainName, hr);
+            log("[!] Failed to get BOFNET assembly from AppDomain. Have you run BOFNET.Bofs.Initializer BOF yet? : 0x%x\n", hr);
             return;
         }
     }

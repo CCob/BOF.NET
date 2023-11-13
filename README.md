@@ -4,6 +4,10 @@
 
 BOF.NET is a small native BOF object combined with the BOF.NET managed runtime that enables the development of Cobalt Strike BOFs directly in .NET.  BOF.NET removes the complexity of native compilation along with the headaches of manually importing native API.  Testing BOF.NET assemblies is also generally much easier, since the .NET assemblies can be debugged using a traditional managed debugger.
 
+## Cobalt Strike Compatibility
+
+BOF.NET versions 1.1.3 and below are compatible with Cobalt Strike 4.8 and below.  BOF.NET version 1.2.0+ are compatible with version 4.9+ since the Beacon API's `BeaconGetValue` and `BeaconAddValue` are now used.
+
 ## Getting started
 
 Implementing you first BOF.NET class is simple.  Add a reference to the BOF.NET runtime DLL from the [BOFNET NuGet](https://www.nuget.org/packages/BOFNET) package and create a class that inherits from `BeaconObject`.  A mandatory constructor with a  `BeaconApi` object as the only parameter is needed.  This should be passed along to the `BeaconObject` base constructor.

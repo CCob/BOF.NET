@@ -1,5 +1,5 @@
-cmake_minimum_required (VERSION 2.8.11)
-project (BOFNET_Managed)
+cmake_minimum_required(VERSION 3.28)
+project (BOFNET_Managed NONE)
 include(ExternalProject)
 
 if(${CMAKE_HOST_SYSTEM_NAME} STREQUAL "Windows")

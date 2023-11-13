@@ -5,6 +5,7 @@
 #include <cinttypes>
 #include <sstream>
 #include <iostream>
+#include <map>
 
 #define CALLBACK_OUTPUT      0x0
 #define CALLBACK_OUTPUT_OEM  0x1e
@@ -19,6 +20,8 @@
                                           ((n & 0xFF000000) >> 24)))
 
 typedef std::vector<char> ByteArray;
+
+std::map<const char*,void*> values;
 
 extern "C" {
 
@@ -72,6 +75,22 @@ extern "C" {
     }
 
     void BeaconGetSpawnTo(BOOL x86, char* buffer, int length){
+    }
+
+    void* BeaconGetValue(const char* name){
+        if (values.find(name) == values.end()) {
+            return nullptr;
+        } else {
+            return values[name];
+        }
+    }
+
+    void BeaconAddValue(const char* name, void* value){
+        values[name] = value;
+    }
+
+    void BeaconRemoveValue(const char* name){
+        values.erase(name);
     }
 }
 
@@ -149,7 +168,7 @@ void goBA(const ByteArray& data){
 int main(int argc, char** argv){
 
     const char init[] = "BOFNET.Bofs.Initializer\x00";
-    ByteArray runtime = readAllData("bofnet.dll");
+    ByteArray runtime = readAllData("..\\dist\\net40\\bofnet.dll");
     ByteArray args;
 
     args.resize(sizeof(init) + runtime.size());
