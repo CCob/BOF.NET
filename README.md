@@ -116,6 +116,45 @@ SendHashes(UserHash[] userHashes)
 | bofnet_jobstatus *job_id*              | Dump any pending console buffer from the background job                  |
 | bofnet_jobkill *job_id*                | Dump any pending console buffer from the background job then kill it.  Warning, can cause deadlocks when terminating a thread that have transitioned into native code                  |
 | bofnet_boo *booscript.boo*             | Compile and execute Boo script in seperate temporary AppDomain           |
+| bofnet_vfs_add *local_path* *vfs_filename* *content_type*            | Add a file from the operator machine and store inside the BOFNET VFS     |
+
+## Built-in BOFS
+
+### VFS
+
+Introduces the concept of a basic in-memory file/blob store.  Other BOF's, like the WebServer BOF can use this for hosting in memory files.
+
+#### Examples
+
+Add a file to the BOF.NET VFS and store as the `application/octet-stream` MIME type
+```
+bofnet_vfs_add c:\tools\BOFNET.dll BOFNET.dll application/octet-stream 
+```
+
+List all files inside the VFS
+```
+bofnet_execute VFS list
+```
+
+Download the file `BOFNET.dll` stored inside the VFS
+```
+bofnet_execute VFS download BOFNET.dll
+```
+
+### Screenshot
+
+Does what it says on the tin, simple screenshot functionality
+
+### WebServer
+
+Hosts an in-memory web server leveraging Microsoft's HTTP Server API.  Files stored inside the BOF.NET VFS are hosted by the web server.
+
+#### Example
+```
+bofnet_job HttpServer http://localhost:1337/
+```
+
+![WebServer](WebServer.png)
 
 ## Caveats
 

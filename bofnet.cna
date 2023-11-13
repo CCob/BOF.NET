@@ -10,6 +10,8 @@ beacon_command_register("bofnet_jobs", "List active BOFNET background jobs", "Sy
 beacon_command_register("bofnet_jobstatus", "Dump the console buffer of an active BOFNET background job", "Synopsis: bofnet_jobstatus jobid\nDump the console buffer of an active BOFNET background job\n");
 beacon_command_register("bofnet_jobkill", "Kills a running jobs thread (warning, could leave leaked resources/sockets behind", "Synopsis: bofnet_jobkill jobid\nKills a running jobs thread (warning, could leave leaked resources/sockets behind\n");
 beacon_command_register("bofnet_boo", "Runs a Boo script in a temporary AppDomain which is then unloaded", "Synopsis: bofnet_boo filename.boo\nRuns a Boo script in a temporary AppDomain which is then unloaded\n");
+beacon_command_register("bofnet_vfs_add", "Uploads a file to the in memory VFS storage", "Synopsis: bofnet_vfs_add local_path filename content_type\Uploads a file to the in memory VFS store\n");
+
 
 
 
@@ -208,4 +210,18 @@ alias bofnet_boo {
 
     blog ($1, "Executing script $2 with the following arguments: $scriptArgs");
     bofnet_execute_raw($1, "BOFNET.Bofs.Boo.BooRunner", $args);
+}
+
+alias bofnet_vfs_add{        
+    local('$fileData $args'); 
+
+    if(size(@_) != 4){
+        blog($1, "[!] Usage: bofnet_hostfile local_path hosting_filename content_type");
+        return;
+    }
+
+    $fileData = readAllFileData($2);
+    $args = bof_pack($1, "bZZ", $fileData , $3, $4);  
+    blog($1, "Attempting to host file $2 (" . strlen($fileData) . " bytes) inside the BOFNET VFS"); 
+    bofnet_execute_raw($1, "BOFNET.Bofs.VFS", $args);
 }

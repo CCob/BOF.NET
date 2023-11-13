@@ -2,7 +2,7 @@
   <PropertyGroup>
     <OutputType>Library</OutputType>
     <!--<TargetFrameworks>net40;net35</TargetFrameworks>-->
-    <TargetFrameworks>net40;net35</TargetFrameworks>
+    <TargetFrameworks>net480;net35</TargetFrameworks>
     <RepositoryUrl>https://github.com/CCob/BOF.NET</RepositoryUrl>
     <PackageProjectUrl>https://github.com/CCob/BOF.NET</PackageProjectUrl>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
@@ -14,7 +14,7 @@
   </PropertyGroup>
   
 <!-- .NET 4.0 references, compilation flags and build options -->
-  <ItemGroup Condition=" '$(TargetFramework)' == 'net40' ">
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net480' ">
     <Reference Include="Boo.Lang">
       <HintPath>..\lib\Boo.Lang.dll</HintPath>      
     </Reference>
@@ -36,18 +36,22 @@
     </PackageReference>
   </ItemGroup>
 
-  <ItemGroup Condition=" '$(TargetFramework)' == 'net40'">
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net480'">
     <PackageReference Include="dnMerge" Version="0.5.15">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>    
   </ItemGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net40|AnyCPU'">
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net480|AnyCPU'">
     <PlatformTarget>AnyCPU</PlatformTarget>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net40|AnyCPU'">
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net35'">
+	<Compile Remove="WebServer\WebServer.cs" />
+  </ItemGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net480|AnyCPU'">
     <DebugType>none</DebugType>
     <DebugSymbols>false</DebugSymbols>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -78,6 +82,14 @@
     <Content Remove="Properties\**" />
     <EmbeddedResource Remove="Properties\**" />
     <None Remove="Properties\**" />
+  </ItemGroup>
+    
+  <ItemGroup>
+    <EmbeddedResource Include="Bofs\WebServer\Files.htm" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <Reference Include="System.Windows.Forms" />
   </ItemGroup>  
   
 
