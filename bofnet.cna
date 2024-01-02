@@ -215,7 +215,6 @@ alias bofnet_boo {
     bofnet_execute_raw($1, "BOFNET.Bofs.Boo.BooRunner", $args);
 }
 
-<<<<<<< HEAD
 alias bofnet_executeassembly {
 
     $bofnetNative = loadBOFNativeRuntime($1);
@@ -259,7 +258,7 @@ alias bofnet_patchexit {
 	btask($1, "Re-patching .NET Environment.Exit()");
 	beacon_inline_execute($1, $bofnetNative, "go", "BOFNET.Bofs.PatchEnvironmentExit\x00");
 }
-=======
+
 alias bofnet_vfs_add{        
     local('$fileData $args'); 
 
@@ -273,4 +272,3 @@ alias bofnet_vfs_add{
     blog($1, "Attempting to host file $2 (" . strlen($fileData) . " bytes) inside the BOFNET VFS"); 
     bofnet_execute_raw($1, "BOFNET.Bofs.VFS", $args);
 }
->>>>>>> upstream/main
