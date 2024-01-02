@@ -4,6 +4,10 @@
 
 BOF.NET is a small native BOF object combined with the BOF.NET managed runtime that enables the development of Cobalt Strike BOFs directly in .NET.  BOF.NET removes the complexity of native compilation along with the headaches of manually importing native API.  Testing BOF.NET assemblies is also generally much easier, since the .NET assemblies can be debugged using a traditional managed debugger.
 
+## Cobalt Strike Compatibility
+
+BOF.NET versions 1.1.3 and below are compatible with Cobalt Strike 4.8 and below.  BOF.NET version 1.2.0+ are compatible with version 4.9+ since the Beacon API's `BeaconGetValue` and `BeaconAddValue` are now used.
+
 ## Getting started
 
 Implementing you first BOF.NET class is simple.  Add a reference to the BOF.NET runtime DLL from the [BOFNET NuGet](https://www.nuget.org/packages/BOFNET) package and create a class that inherits from `BeaconObject`.  A mandatory constructor with a  `BeaconApi` object as the only parameter is needed.  This should be passed along to the `BeaconObject` base constructor.
@@ -112,9 +116,48 @@ SendHashes(UserHash[] userHashes)
 | bofnet_jobstatus *job_id*              | Dump any pending console buffer from the background job                  |
 | bofnet_jobkill *job_id*                | Dump any pending console buffer from the background job then kill it.  Warning, can cause deadlocks when terminating a thread that have transitioned into native code                  |
 | bofnet_boo *booscript.boo*             | Compile and execute Boo script in seperate temporary AppDomain           |
+| bofnet_vfs_add *local_path* *vfs_filename* *content_type*            | Add a file from the operator machine and store inside the BOFNET VFS     |
 | bofnet_executeassembly *assembly_name* [*args*]    | Execute a standard .NET assembly calling the entry point, supplying optional arguments. Blocks Beacon until completion.           | 
 | bofnet_jobassembly *assembly_name* [*args*]    | Execute a standard .NET assembly calling the entry point, supplying optional arguments. Runs as a background job (two threads).            |
 | bofnet_patchexit                       | Re-patch .NET's Environment.Exit() to prevent exit. Performed by default during `bofnet_init` but useful if DLLs are unhooked later.           | 
+
+## Built-in BOFS
+
+### VFS
+
+Introduces the concept of a basic in-memory file/blob store.  Other BOF's, like the WebServer BOF can use this for hosting in memory files.
+
+#### Examples
+
+Add a file to the BOF.NET VFS and store as the `application/octet-stream` MIME type
+```
+bofnet_vfs_add c:\tools\BOFNET.dll BOFNET.dll application/octet-stream 
+```
+
+List all files inside the VFS
+```
+bofnet_execute VFS list
+```
+
+Download the file `BOFNET.dll` stored inside the VFS
+```
+bofnet_execute VFS download BOFNET.dll
+```
+
+### Screenshot
+
+Does what it says on the tin, simple screenshot functionality
+
+### WebServer
+
+Hosts an in-memory web server leveraging Microsoft's HTTP Server API.  Files stored inside the BOF.NET VFS are hosted by the web server.
+
+#### Example
+```
+bofnet_job HttpServer http://localhost:1337/
+```
+
+![WebServer](WebServer.png)
 
 ## Caveats
 

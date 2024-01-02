@@ -5,12 +5,23 @@
 #include <windows.h>
 #include <winternl.h>
 #include <wincrypt.h>
+#include <utility>
+
 
 #ifdef _BOF_
 extern "C" __declspec(dllimport) int msvcrt$sprintf_s(char* str, size_t len, const char* format, ... );
 extern "C" __declspec(dllimport) int msvcrt$sscanf_s(const char* str, const char* format, ... );
-#define sprintf_s msvcrt$sprintf_s
-#define sscanf_s msvcrt$sscanf_s
+
+template <typename... Args>
+auto sprintf_s(Args&&... args) -> decltype(f(std::forward<Args>(args)...)) {
+  return msvcrt$sprintf_s(std::forward<Args>(args)...);
+}
+
+template <typename... Args>
+auto sscanf_s(Args&&... args) -> decltype(f(std::forward<Args>(args)...)) {
+  return msvcrt$sscanf_s(std::forward<Args>(args)...);
+}
+
 #define log(fmt, ...) BeaconPrintf(CALLBACK_OUTPUT, fmt, __VA_ARGS__)
 #include <comutil.h>
 #else
@@ -96,6 +107,8 @@ BOF_REDECLARE(NTDLL, NtUnmapViewOfSection);
 BOF_REDECLARE(Crypt32, CryptStringToBinaryA);
 
 BOF_REDECLARE(OLE32, CoInitializeEx);
+BOF_REDECLARE(OLE32, CoInitializeSecurity);
+BOF_REDECLARE(OLE32, CoUninitialize);
 BOF_REDECLARE(OLE32, CoCreateInstance);
 BOF_REDECLARE(OLE32, CLSIDFromString);
 
@@ -105,6 +118,7 @@ BOF_REDECLARE(OleAut32, SafeArrayPutElement);
 BOF_REDECLARE(OleAut32, SafeArrayCreate);
 BOF_REDECLARE(OleAut32, SafeArrayCreateVector);
 BOF_REDECLARE(OleAut32, SysAllocString);
+BOF_REDECLARE(OleAut32, SysFreeString);
 
 BOF_REDECLARE(msvcrt, calloc);
 BOF_REDECLARE(msvcrt, free);
