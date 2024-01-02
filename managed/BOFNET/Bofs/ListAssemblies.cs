@@ -11,7 +11,7 @@ namespace BOFNET.Bofs {
         public override void Go(string[] _) {
             foreach(KeyValuePair<string, Runtime.AssemblyInfo> assembly in Runtime.LoadedAssemblies) {
                 BeaconConsole.WriteLine($"{assembly.Key}: {assembly.Value.Assembly.FullName}");
-            }           
+            }
         }
     }
 }
