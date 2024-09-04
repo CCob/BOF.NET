@@ -11,7 +11,9 @@ beacon_command_register("bofnet_jobstatus", "Dump the console buffer of an activ
 beacon_command_register("bofnet_jobkill", "Kills a running jobs thread (warning, could leave leaked resources/sockets behind", "Synopsis: bofnet_jobkill jobid\nKills a running jobs thread (warning, could leave leaked resources/sockets behind\n");
 beacon_command_register("bofnet_boo", "Runs a Boo script in a temporary AppDomain which is then unloaded", "Synopsis: bofnet_boo filename.boo\nRuns a Boo script in a temporary AppDomain which is then unloaded\n");
 beacon_command_register("bofnet_vfs_add", "Uploads a file to the in memory VFS storage", "Synopsis: bofnet_vfs_add local_path filename content_type\Uploads a file to the in memory VFS store\n");
-
+beacon_command_register("bofnet_executeassembly", "Execute a standard .NET assembly calling the entry point (blocks until completion)", "Synopsis: bofnet_executeassembly assembly_name arg1 arg2 ...\nExecute a standard .NET assembly calling the entry point and passing all arguments supplied (blocks until completion)\n");
+beacon_command_register("bofnet_jobassembly", "Execute a standard .NET assembly calling the entry point (as a background job)", "Synopsis: bofnet_jobassembly assembly_name arg1 arg2 ...\nExecute a standard .NET assembly calling the entry point and passing all arguments supplied (as a background job)\n");
+beacon_command_register("bofnet_patchexit", "Re-patch .NET's Environment.Exit() to prevent exit", "Synopsis: bofnet_patchexit \nRe-patch .NET's Environment.Exit() to prevent exit");
 
 
 
@@ -82,6 +84,7 @@ alias bofnet_init {
 
 	btask($1, "Initializing BOFNET");
 	beacon_inline_execute($1, $bofnetNative, "go", "BOFNET.Bofs.Initializer\x00".$bofnetRuntime);
+	beacon_inline_execute($1, $bofnetNative, "go", "BOFNET.Bofs.PatchEnvironmentExit\x00");
 }
 
 alias bofnet_shutdown {
@@ -210,6 +213,50 @@ alias bofnet_boo {
 
     blog ($1, "Executing script $2 with the following arguments: $scriptArgs");
     bofnet_execute_raw($1, "BOFNET.Bofs.Boo.BooRunner", $args);
+}
+
+alias bofnet_executeassembly {
+
+    $bofnetNative = loadBOFNativeRuntime($1);
+    if($bofnetNative != $null){
+        return;
+    }
+    $bofArguments = "\x00";
+  
+    @argParts = sublist(@_,2);
+    if(size(@argParts) > 0){
+        $bofArguments = " ".addQuotes(@argParts)."\x00";    
+    }
+   
+	btask($1, "Attempting to start .NET assembly in blocking mode");
+	beacon_inline_execute($1, $bofnetNative, "go", "BOFNET.Bofs.ExecuteAssembly ".$2.$bofArguments);  
+}
+
+alias bofnet_jobassembly {
+
+    $bofnetNative = loadBOFNativeRuntime($1);
+    if($bofnetNative != $null){
+        return;
+    }
+    $bofArguments = "\x00";
+  
+    @argParts = sublist(@_,2);
+    if(size(@argParts) > 0){
+        $bofArguments = " ".addQuotes(@argParts)."\x00";    
+    }
+   
+	btask($1, "Attempting to start .NET assembly as a job");
+	beacon_inline_execute($1, $bofnetNative, "go", "BOFNET.Bofs.Jobs.JobRunnerAssembly ".$2.$bofArguments);  
+}
+
+alias bofnet_patchexit {
+    $bofnetNative = loadBOFNativeRuntime($1);
+    if($bofnetNative != $null){
+        return;
+    }
+
+	btask($1, "Re-patching .NET Environment.Exit()");
+	beacon_inline_execute($1, $bofnetNative, "go", "BOFNET.Bofs.PatchEnvironmentExit\x00");
 }
 
 alias bofnet_vfs_add{        

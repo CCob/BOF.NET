@@ -117,6 +117,9 @@ SendHashes(UserHash[] userHashes)
 | bofnet_jobkill *job_id*                | Dump any pending console buffer from the background job then kill it.  Warning, can cause deadlocks when terminating a thread that have transitioned into native code                  |
 | bofnet_boo *booscript.boo*             | Compile and execute Boo script in seperate temporary AppDomain           |
 | bofnet_vfs_add *local_path* *vfs_filename* *content_type*            | Add a file from the operator machine and store inside the BOFNET VFS     |
+| bofnet_executeassembly *assembly_name* [*args*]    | Execute a standard .NET assembly calling the entry point, supplying optional arguments. Blocks Beacon until completion.           | 
+| bofnet_jobassembly *assembly_name* [*args*]    | Execute a standard .NET assembly calling the entry point, supplying optional arguments. Runs as a background job (two threads).            |
+| bofnet_patchexit                       | Re-patch .NET's Environment.Exit() to prevent exit. Performed by default during `bofnet_init` but useful if DLLs are unhooked later.           | 
 
 ## Built-in BOFS
 
